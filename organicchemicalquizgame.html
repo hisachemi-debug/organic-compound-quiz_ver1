@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Organic Chem Quest | 有機化学構造式バトル</title>
+  <title>Organic Chem Quest | 有機化学構造・反応マスター</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
@@ -13,9 +13,6 @@
       --bg-dark: #0a0f1d;
       --panel-bg: rgba(16, 24, 46, 0.88);
       --border-cyan: #06b6d4;
-      --glow-cyan: rgba(6, 182, 212, 0.4);
-      --accent-yellow: #fbbf24;
-      --accent-pink: #ec4899;
     }
 
     body {
@@ -60,7 +57,6 @@
       100% { box-shadow: 0 0 30px rgba(251, 191, 36, 0.8); border-color: #fbbf24; }
     }
 
-    /* 構造式SVGの描画設定 */
     .chem-text {
       font-family: 'JetBrains Mono', 'Noto Sans JP', sans-serif;
       font-size: 14px;
@@ -83,7 +79,7 @@
 </head>
 <body class="flex flex-col h-[100dvh] w-full max-w-xl mx-auto p-1.5 sm:p-3 relative overflow-hidden">
 
-  <!-- ================= TOP HUD ================= -->
+  <!-- TOP HUD -->
   <header class="flex items-center justify-between px-3 py-1.5 cyber-panel rounded-xl shrink-0 mb-1.5">
     <div class="flex items-center space-x-2">
       <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
@@ -99,7 +95,7 @@
     </div>
   </header>
 
-  <!-- ================= VIEW 1: タイトル・分野選択画面 ================= -->
+  <!-- VIEW 1: タイトル・分野選択 -->
   <main id="titleView" class="flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-3 sm:p-4 text-center">
     <div class="shrink-0">
       <div class="inline-block px-3 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[11px] font-mono tracking-widest mb-1">
@@ -108,10 +104,10 @@
       <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-300">
         有機構造式クエスト
       </h1>
-      <p class="text-[11px] text-slate-400">高校化学教科書・共通テスト完全準拠</p>
+      <p class="text-[11px] text-slate-400">高校基礎〜共通テスト：官能基・反応性完全マスター</p>
     </div>
 
-    <!-- 分野セレクト（2×2グリッド） -->
+    <!-- 分野セレクト -->
     <div class="my-auto py-1 w-full">
       <div class="text-[11px] font-bold text-cyan-400 text-left mb-1.5 flex items-center gap-1 px-1">
         <span>▼ 出題分野を選択</span>
@@ -151,7 +147,7 @@
       </div>
     </div>
 
-    <!-- モード選択 & スタート -->
+    <!-- モード選択 -->
     <div class="space-y-1.5 shrink-0 w-full">
       <div class="grid grid-cols-2 gap-2">
         <button id="startSpeedBtn" class="btn-cyber p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold text-white shadow-lg shadow-cyan-500/30 flex flex-col items-center">
@@ -169,14 +165,14 @@
     </div>
   </main>
 
-  <!-- ================= VIEW 2: バトル画面 (1画面完全固定・スクロールなし) ================= -->
+  <!-- VIEW 2: バトル画面 (1画面完全固定) -->
   <main id="battleView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-2 sm:p-3 relative">
     
     <!-- HUD -->
     <div class="flex items-center justify-between text-xs font-mono shrink-0 px-1">
       <div class="flex items-center gap-1.5">
-        <span id="questionTypeBadge" class="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 text-[10px] font-bold">
-          構造 ➔ 名称
+        <span id="questionTypeBadge" class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 text-[10px] font-bold">
+          構造 ➔ 性質・反応
         </span>
         <span id="feverBadge" class="hidden px-1.5 py-0.5 rounded bg-pink-600 font-black text-[10px] text-white animate-bounce">
           🔥 FEVER x2
@@ -196,13 +192,12 @@
       <div id="timerBar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 w-full transition-all duration-100 ease-linear"></div>
     </div>
 
-    <!-- 問題表示領域（横幅フル活用で改行を自然に） -->
+    <!-- 問題文 & 構造式提示領域 -->
     <div class="flex-1 flex flex-col items-center justify-center min-h-0 py-0.5 text-center w-full px-1">
       <h2 id="questionPrompt" class="w-full text-xs sm:text-sm font-bold text-slate-100 mb-1 leading-snug break-words">
         <!-- JSで挿入 -->
       </h2>
 
-      <!-- 構造式問題のSVG枠（高さ最大追従） -->
       <div id="questionSvgContainer" class="w-full max-w-[190px] h-24 sm:h-28 flex items-center justify-center bg-slate-900/90 rounded-xl border border-slate-700/80 p-1 shadow-inner relative">
         <svg id="questionSvg" class="w-full h-full object-contain" viewBox="0 0 180 180"></svg>
         <span id="questionFormula" class="absolute bottom-1 right-2 text-[9px] font-mono text-slate-400/80"></span>
@@ -214,7 +209,7 @@
       <!-- JSで4つのボタンを生成 -->
     </div>
 
-    <!-- 即時解説モーダル -->
+    <!-- 解説トースト -->
     <div id="answerFeedbackModal" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center justify-between text-center">
       <div id="feedbackIcon" class="text-3xl my-auto">⭕</div>
       <div class="w-full px-1">
@@ -227,7 +222,7 @@
     </div>
   </main>
 
-  <!-- ================= VIEW 3: リザルト画面 ================= -->
+  <!-- VIEW 3: リザルト画面 -->
   <main id="resultView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-4 text-center">
     <div class="shrink-0">
       <span class="text-xs font-mono text-cyan-400">OPERATION COMPLETED</span>
@@ -262,7 +257,7 @@
     </div>
   </main>
 
-  <!-- ================= VIEW 4: 分子図鑑（Dex）モーダル ================= -->
+  <!-- VIEW 4: 分子図鑑（Dex）モーダル -->
   <div id="dexModal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md p-3 flex flex-col justify-between">
     <div class="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
       <h3 class="text-base font-bold text-cyan-300 flex items-center gap-1.5">
@@ -283,11 +278,11 @@
 
   <script>
     /* ==========================================================
-       1. 高校化学36化合物 完全データベース（高校教科書ケクレ表記）
+       1. 高校化学36化合物 完全データベース（ケクレ表記・教科書準拠）
        ========================================================== */
     const COMPOUNDS = [
       // 脂肪族 (12)
-      { id: 'methane', name: 'メタン', formula: 'CH4', cat: 'aliphatic', desc: '最も単純なアルカン。正四面体構造。天然ガスの主成分。置換反応を起こしやすい。',
+      { id: 'methane', name: 'メタン', formula: 'CH4', cat: 'aliphatic', desc: '最も単純なアルカン。正四面体構造。塩素と光照射で段階的に置換反応。',
         svg: `<text x="90" y="90" class="chem-text">C</text>
               <line x1="90" y1="78" x2="90" y2="48" class="chem-bond"/><text x="90" y="38" class="chem-text">H</text>
               <line x1="90" y1="102" x2="90" y2="132" class="chem-bond"/><text x="90" y="142" class="chem-text">H</text>
@@ -300,51 +295,51 @@
               <line x1="60" y1="100" x2="42" y2="118" class="chem-bond"/><text x="34" y="126" class="chem-text">H</text>
               <line x1="120" y1="80" x2="138" y2="62" class="chem-bond"/><text x="146" y="54" class="chem-text">H</text>
               <line x1="120" y1="100" x2="138" y2="118" class="chem-bond"/><text x="146" y="126" class="chem-text">H</text>` },
-      { id: 'ethyne', name: 'アセチレン (エチン)', formula: 'C2H2', cat: 'aliphatic', desc: '三重結合をもつ直線状分子。炭化カルシウム（カーバイド）に水を加えて発生。銀アセチリド沈殿を生じる。',
+      { id: 'ethyne', name: 'アセチレン (エチン)', formula: 'C2H2', cat: 'aliphatic', desc: '三重結合をもつ直線状分子。カーバイドに水を加えて発生。銀アセチリド白沈を生じる。',
         svg: `<text x="40" y="90" class="chem-text">H</text><line x1="50" y1="90" x2="70" y2="90" class="chem-bond"/>
               <text x="80" y="90" class="chem-text">C</text>
               <line x1="90" y1="84" x2="110" y2="84" class="chem-bond"/><line x1="90" y1="90" x2="110" y2="90" class="chem-bond"/><line x1="90" y1="96" x2="110" y2="96" class="chem-bond"/>
               <text x="120" y="90" class="chem-text">C</text><line x1="130" y1="90" x2="150" y2="90" class="chem-bond"/><text x="160" y="90" class="chem-text">H</text>` },
-      { id: 'propene', name: 'プロペン', formula: 'C3H6', cat: 'aliphatic', desc: '水を付加させるとマルコフニコフ則に従い主生成物として2-プロパノールが得られる。',
+      { id: 'propene', name: 'プロペン', formula: 'C3H6', cat: 'aliphatic', desc: '水を付加させるとマルコフニコフ則に従い主生成物として2-プロパノールが得られる。臭素水脱色。',
         svg: `<text x="45" y="90" class="chem-text">H3C</text><line x1="65" y1="90" x2="85" y2="90" class="chem-bond"/>
               <text x="95" y="90" class="chem-text">CH</text>
               <line x1="107" y1="86" x2="125" y2="86" class="chem-bond"/><line x1="107" y1="94" x2="125" y2="94" class="chem-bond"/>
               <text x="142" y="90" class="chem-text">CH2</text>` },
-      { id: 'methanol', name: 'メタノール', formula: 'CH4O', cat: 'aliphatic', desc: '有毒（失明の危険）。一酸化炭素と水素から工業的に合成される第1級アルコール。',
+      { id: 'methanol', name: 'メタノール', formula: 'CH4O', cat: 'aliphatic', desc: '第1級アルコール。有毒（失明危険）。Naと反応してH2発生。酸化するとホルムアルデヒド、さらにギ酸へ。',
         svg: `<text x="50" y="90" class="chem-text">H3C</text><line x1="75" y1="90" x2="115" y2="90" class="chem-bond"/><text x="135" y="90" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'ethanol', name: 'エタノール', formula: 'C2H6O', cat: 'aliphatic', desc: 'ヨードホルム反応陽性。ナトリウムと反応して水素発生。酒類の主成分。',
+      { id: 'ethanol', name: 'エタノール', formula: 'C2H6O', cat: 'aliphatic', desc: '第1級アルコール。Naと反応してH2発生。CH3-CH(OH)-をもつためヨードホルム反応陽性。酸化でアセトアルデヒド。',
         svg: `<text x="40" y="90" class="chem-text">H3C</text><line x1="62" y1="90" x2="90" y2="90" class="chem-bond"/>
               <text x="105" y="90" class="chem-text">CH2</text><line x1="120" y1="90" x2="140" y2="90" class="chem-bond"/>
               <text x="155" y="90" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'isopropanol', name: '2-プロパノール', formula: 'C3H8O', cat: 'aliphatic', desc: '第2級アルコール。酸化するとアセトンになる。ヨードホルム反応陽性。消毒液に多用される。',
+      { id: 'isopropanol', name: '2-プロパノール', formula: 'C3H8O', cat: 'aliphatic', desc: '第2級アルコール。Naと反応してH2発生。酸化するとアセトンを生じる。ヨードホルム反応陽性。',
         svg: `<text x="90" y="90" class="chem-text">CH</text>
               <line x1="90" y1="78" x2="90" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text" fill="#f87171">OH</text>
               <line x1="75" y1="95" x2="48" y2="108" class="chem-bond"/><text x="35" y="115" class="chem-text">H3C</text>
               <line x1="105" y1="95" x2="132" y2="108" class="chem-bond"/><text x="145" y="115" class="chem-text">CH3</text>` },
-      { id: 'secbutanol', name: '2-ブタノール', formula: 'C4H10O', cat: 'aliphatic', desc: '不斉炭素原子をもち鏡像異性体が存在。酸化するとメチルエチルケトン。ヨードホルム反応陽性。',
+      { id: 'secbutanol', name: '2-ブタノール', formula: 'C4H10O', cat: 'aliphatic', desc: '不斉炭素原子をもち鏡像異性体が存在。第2級アルコールでNaと反応してH2発生。酸化でMEK。ヨードホルム陽性。',
         svg: `<text x="85" y="90" class="chem-text">CH</text>
               <line x1="85" y1="78" x2="85" y2="52" class="chem-bond"/><text x="85" y="42" class="chem-text" fill="#f87171">OH</text>
               <line x1="70" y1="90" x2="48" y2="90" class="chem-bond"/><text x="35" y="90" class="chem-text">H3C</text>
               <line x1="102" y1="90" x2="125" y2="90" class="chem-bond"/><text x="146" y="90" class="chem-text">C2H5</text>` },
-      { id: 'ethylene_glycol', name: 'エチレングリコール', formula: 'C2H6O2', cat: 'aliphatic', desc: '2価アルコール。自動車の不凍液やPETボトルの原料（ポリエチレンテレフタラート合成原料）。',
+      { id: 'ethylene_glycol', name: 'エチレングリコール', formula: 'C2H6O2', cat: 'aliphatic', desc: '2価アルコール。Naと反応してH2発生。自動車不凍液。テレフタル酸と縮合重合してポリエチレンテレフタラート。',
         svg: `<text x="65" y="90" class="chem-text">CH2</text><line x1="85" y1="90" x2="105" y2="90" class="chem-bond"/><text x="125" y="90" class="chem-text">CH2</text>
               <line x1="65" y1="102" x2="65" y2="125" class="chem-bond"/><text x="65" y="136" class="chem-text" fill="#f87171">OH</text>
               <line x1="125" y1="102" x2="125" y2="125" class="chem-bond"/><text x="125" y="136" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'glycerol', name: 'グリセリン', formula: 'C3H8O3', cat: 'aliphatic', desc: '3価アルコール。油脂を加水分解すると高級脂肪酸とともに得られる。ニトログリセリンの原料。',
+      { id: 'glycerol', name: 'グリセリン', formula: 'C3H8O3', cat: 'aliphatic', desc: '3価アルコール。Naと反応してH2発生。油脂を加水分解すると高級脂肪酸とともに得られる。保湿剤。',
         svg: `<text x="50" y="90" class="chem-text">CH2</text><line x1="68" y1="90" x2="80" y2="90" class="chem-bond"/>
               <text x="92" y="90" class="chem-text">CH</text><line x1="104" y1="90" x2="116" y2="90" class="chem-bond"/>
               <text x="134" y="90" class="chem-text">CH2</text>
               <line x1="50" y1="102" x2="50" y2="122" class="chem-bond"/><text x="50" y="132" class="chem-text" fill="#f87171">OH</text>
               <line x1="92" y1="102" x2="92" y2="122" class="chem-bond"/><text x="92" y="132" class="chem-text" fill="#f87171">OH</text>
               <line x1="134" y1="102" x2="134" y2="122" class="chem-bond"/><text x="134" y="132" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'maleic_acid', name: 'マレイン酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'シス型幾何異性体。加熱すると分子内で容易に脱水し、無水マレイン酸になる。',
+      { id: 'maleic_acid', name: 'マレイン酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'シス型幾何異性体。二重結合で臭素水脱色。-COOHでNaHCO3からCO2発生。加熱すると分子内で容易に脱水。',
         svg: `<text x="75" y="105" class="chem-text">C</text><text x="105" y="105" class="chem-text">C</text>
               <line x1="84" y1="101" x2="96" y2="101" class="chem-bond"/><line x1="84" y1="109" x2="96" y2="109" class="chem-bond"/>
               <line x1="72" y1="92" x2="56" y2="68" class="chem-bond"/><text x="45" y="55" class="chem-text" fill="#f87171">HOOC</text>
               <line x1="108" y1="92" x2="124" y2="68" class="chem-bond"/><text x="138" y="55" class="chem-text" fill="#f87171">COOH</text>
               <line x1="75" y1="115" x2="65" y2="135" class="chem-bond"/><text x="60" y="145" class="chem-text">H</text>
               <line x1="105" y1="115" x2="115" y2="135" class="chem-bond"/><text x="120" y="145" class="chem-text">H</text>` },
-      { id: 'fumaric_acid', name: 'フマル酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'トランス型幾何異性体。マレイン酸と異なり分子内脱水せず、融点が高い。',
+      { id: 'fumaric_acid', name: 'フマル酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'トランス型幾何異性体。臭素水を脱色。-COOHでNaHCO3からCO2発生。分子内脱水しない。',
         svg: `<text x="75" y="90" class="chem-text">C</text><text x="105" y="90" class="chem-text">C</text>
               <line x1="84" y1="86" x2="96" y2="86" class="chem-bond"/><line x1="84" y1="94" x2="96" y2="94" class="chem-bond"/>
               <line x1="72" y1="78" x2="56" y2="55" class="chem-bond"/><text x="45" y="45" class="chem-text" fill="#f87171">HOOC</text>
@@ -353,24 +348,24 @@
               <line x1="105" y1="78" x2="115" y2="55" class="chem-bond"/><text x="120" y="45" class="chem-text">H</text>` },
 
       // 芳香族 (15)
-      { id: 'benzene', name: 'ベンゼン', formula: 'C6H6', cat: 'aromatic', desc: '正六角形平面分子。ケクレ構造の交互二重結合。置換反応を起こしやすい。',
+      { id: 'benzene', name: 'ベンゼン', formula: 'C6H6', cat: 'aromatic', desc: '正六角形平面分子。ケクレ構造の交互二重結合。付加反応よりも置換反応が起こりやすい。',
         svg: `<polygon points="90,40 125,60 125,100 90,120 55,100 55,60" fill="none" class="chem-bond"/>
               <line x1="90" y1="48" x2="118" y2="64" class="chem-bond"/><line x1="118" y1="96" x2="90" y2="112" class="chem-bond"/><line x1="62" y1="96" x2="62" y2="64" class="chem-bond"/>` },
-      { id: 'toluene', name: 'トルエン', formula: 'C7H8', cat: 'aromatic', desc: 'メチルベンゼン。過マンガン酸カリウム等で酸化すると安息香酸になる。',
+      { id: 'toluene', name: 'トルエン', formula: 'C7H8', cat: 'aromatic', desc: 'メチルベンゼン。側鎖メチル基を酸化すると安息香酸になる。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text">CH3</text>` },
-      { id: 'o_xylene', name: 'o-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,2-ジメチルベンゼン。酸化するとフタル酸（オルトジカルボン酸）になる。',
+      { id: 'o_xylene', name: 'o-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,2-ジメチルベンゼン。酸化するとフタル酸（加熱で容易に脱水するオルト体）になる。',
         svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
               <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
               <line x1="85" y1="60" x2="85" y2="38" class="chem-bond"/><text x="85" y="28" class="chem-text">CH3</text>
               <line x1="120" y1="80" x2="140" y2="68" class="chem-bond"/><text x="155" y="62" class="chem-text">CH3</text>` },
-      { id: 'p_xylene', name: 'p-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,4-ジメチルベンゼン。酸化するとテレフタル酸（ポリエステル原料）が得られる。',
+      { id: 'p_xylene', name: 'p-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,4-ジメチルベンゼン。酸化するとテレフタル酸（ポリエステル合成原料）が得られる。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text">CH3</text>
               <line x1="90" y1="135" x2="90" y2="154" class="chem-bond"/><text x="90" y="164" class="chem-text">CH3</text>` },
-      { id: 'styrene', name: 'スチレン', formula: 'C8H8', cat: 'aromatic', desc: 'ビニルベンゼン。側鎖二重結合が臭素水を脱色する。付加重合でポリスチレン。',
+      { id: 'styrene', name: 'スチレン', formula: 'C8H8', cat: 'aromatic', desc: 'ビニルベンゼン。側鎖二重結合により臭素水を付加脱色する。付加重合でポリスチレン。',
         svg: `<polygon points="80,70 115,90 115,130 80,150 45,130 45,90" fill="none" class="chem-bond"/>
               <line x1="80" y1="78" x2="108" y2="94" class="chem-bond"/><line x1="108" y1="126" x2="80" y2="142" class="chem-bond"/><line x1="52" y1="126" x2="52" y2="94" class="chem-bond"/>
               <line x1="80" y1="70" x2="80" y2="48" class="chem-bond"/><text x="85" y="38" class="chem-text">CH</text>
@@ -381,72 +376,72 @@
               <line x1="90" y1="75" x2="90" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text">CH</text>
               <line x1="80" y1="36" x2="62" y2="24" class="chem-bond"/><text x="48" y="18" class="chem-text">H3C</text>
               <line x1="100" y1="36" x2="118" y2="24" class="chem-bond"/><text x="132" y="18" class="chem-text">CH3</text>` },
-      { id: 'phenol', name: 'フェノール', formula: 'C6H6O', cat: 'aromatic', desc: '弱酸性（炭酸より弱い）。塩化鉄(III)で紫色呈色。臭素水で白沈（2,4,6-トリブロモフェノール）。',
+      { id: 'phenol', name: 'フェノール', formula: 'C6H6O', cat: 'aromatic', desc: 'フェノール性OHをもつ。弱酸性（炭酸より弱くNaHCO3とは不反応）。FeCl3で紫色。Naと反応してH2発生。臭素水で白沈。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'picric_acid', name: 'ピクリン酸', formula: 'C6H3N3O7', cat: 'aromatic', desc: '2,4,6-トリニトロフェノール。3つのニトロ基の電子求引性で強酸性を示す黄色結晶。',
+      { id: 'picric_acid', name: 'ピクリン酸', formula: 'C6H3N3O7', cat: 'aromatic', desc: '2,4,6-トリニトロフェノール。3つのニトロ基の強い電子求引性のため強酸性を示す黄色結晶。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="36" class="chem-bond"/><text x="90" y="25" class="chem-text" fill="#f87171">OH</text>
               <line x1="55" y1="75" x2="35" y2="65" class="chem-bond"/><text x="24" y="60" class="chem-text" fill="#38bdf8">O2N</text>
               <line x1="125" y1="75" x2="145" y2="65" class="chem-bond"/><text x="156" y="60" class="chem-text" fill="#38bdf8">NO2</text>
               <line x1="90" y1="135" x2="90" y2="155" class="chem-bond"/><text x="90" y="165" class="chem-text" fill="#38bdf8">NO2</text>` },
-      { id: 'benzoic_acid', name: '安息香酸', formula: 'C7H6O2', cat: 'aromatic', desc: 'カルボキシ基をもつ芳香族カルボン酸。炭酸水素ナトリウムと反応してCO2気泡を発生する。',
+      { id: 'benzoic_acid', name: '安息香酸', formula: 'C7H6O2', cat: 'aromatic', desc: '芳香族カルボン酸。-COOHをもつためNaHCO3と反応してCO2気泡発生。Naと反応してH2発生。',
         svg: `<polygon points="90,58 125,78 125,118 90,138 55,118 55,78" fill="none" class="chem-bond"/>
               <line x1="90" y1="66" x2="118" y2="82" class="chem-bond"/><line x1="118" y1="114" x2="90" y2="130" class="chem-bond"/><line x1="62" y1="114" x2="62" y2="82" class="chem-bond"/>
               <line x1="90" y1="58" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#f87171">COOH</text>` },
-      { id: 'salicylic_acid', name: 'サリチル酸', formula: 'C7H6O3', cat: 'aromatic', desc: 'フェノール性OHとCOOHをオルト位にもつ。塩化鉄(III)で赤紫色呈色、NaHCO3で気泡発生。',
+      { id: 'salicylic_acid', name: 'サリチル酸', formula: 'C7H6O3', cat: 'aromatic', desc: 'フェノール性OHとCOOHをもつ。FeCl3で赤紫色呈色し、さらにNaHCO3でCO2発生。無水酢酸でアスピリンに。',
         svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
               <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
               <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOH</text>
               <line x1="120" y1="80" x2="140" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'acetylsalicylic_acid', name: 'アセチルサリチル酸', formula: 'C9H8O4', cat: 'aromatic', desc: 'アスピリン（解熱鎮痛剤）。OH基がアセチル化されており、塩化鉄(III)で呈色しない。',
+      { id: 'acetylsalicylic_acid', name: 'アセチルサリチル酸', formula: 'C9H8O4', cat: 'aromatic', desc: 'アスピリン。OHがアセチル化されておりFeCl3で呈色しない。COOHがあるためNaHCO3でCO2発生。けん化される。',
         svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
               <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
               <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOH</text>
               <line x1="120" y1="80" x2="138" y2="70" class="chem-bond"/><text x="160" y="66" class="chem-text" fill="#f87171">OCOCH3</text>` },
-      { id: 'methyl_salicylate', name: 'サリチル酸メチル', formula: 'C8H8O3', cat: 'aromatic', desc: '消炎鎮痛塗布剤。特有の芳香。フェノール性OHが残っているため塩化鉄(III)で赤紫色呈色。',
+      { id: 'methyl_salicylate', name: 'サリチル酸メチル', formula: 'C8H8O3', cat: 'aromatic', desc: '消炎鎮痛剤。COOHがエステル化されNaHCO3とは反応しないが、フェノール性OHがあるためFeCl3で赤紫色呈色。',
         svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
               <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
               <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOCH3</text>
               <line x1="120" y1="80" x2="140" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'phthalic_acid', name: 'フタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'オルト位に2つのカルボキシ基をもつ。加熱により分子内脱水して無水フタル酸になる。',
+      { id: 'phthalic_acid', name: 'フタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'オルト位に2つのカルボキシ基をもつ。NaHCO3と反応。加熱により容易に分子内脱水して無水フタル酸になる。',
         svg: `<polygon points="80,62 115,82 115,122 80,142 45,122 45,82" fill="none" class="chem-bond"/>
               <line x1="80" y1="70" x2="108" y2="86" class="chem-bond"/><line x1="108" y1="118" x2="80" y2="134" class="chem-bond"/><line x1="52" y1="118" x2="52" y2="86" class="chem-bond"/>
               <line x1="80" y1="62" x2="80" y2="38" class="chem-bond"/><text x="80" y="28" class="chem-text" fill="#f87171">COOH</text>
               <line x1="115" y1="82" x2="135" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">COOH</text>` },
-      { id: 'terephthalic_acid', name: 'テレフタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'パラ位にカルボキシ基。エチレングリコールと縮合重合してポリエチレンテレフタラート（PET）を生成。',
+      { id: 'terephthalic_acid', name: 'テレフタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'パラ位に2つのカルボキシ基。NaHCO3と反応。分子内脱水しない。エチレングリコールと重合してPETに。',
         svg: `<polygon points="90,56 125,76 125,116 90,136 55,116 55,76" fill="none" class="chem-bond"/>
               <line x1="90" y1="64" x2="118" y2="80" class="chem-bond"/><line x1="118" y1="112" x2="90" y2="128" class="chem-bond"/><line x1="62" y1="112" x2="62" y2="80" class="chem-bond"/>
               <line x1="90" y1="56" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text" fill="#f87171">COOH</text>
               <line x1="90" y1="136" x2="90" y2="154" class="chem-bond"/><text x="90" y="165" class="chem-text" fill="#f87171">COOH</text>` },
-      { id: 'aniline', name: 'アニリン', formula: 'C6H7N', cat: 'aromatic', desc: '芳香族第1級アミン。弱塩基性。さらし粉水溶液で赤紫色呈色。亜硝酸ナトリウムと塩酸でジアゾ化。',
+      { id: 'aniline', name: 'アニリン', formula: 'C6H7N', cat: 'aromatic', desc: '芳香族第1級アミン。弱塩基性で塩酸に溶ける。さらし粉水溶液で赤紫色呈色。亜硝酸ナトリウムと塩酸でジアゾ化。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#38bdf8">NH2</text>` },
 
       // 酸素・窒素含有 (9)
-      { id: 'formaldehyde', name: 'ホルムアルデヒド', formula: 'CH2O', cat: 'oxygen', desc: '刺激臭の気体。水溶液はホルマリン。銀鏡反応・フェーリング反応を示し、フェノール樹脂の原料になる。',
+      { id: 'formaldehyde', name: 'ホルムアルデヒド', formula: 'CH2O', cat: 'oxygen', desc: '刺激臭の気体。還元性をもち銀鏡反応・フェーリング反応を示す。フェノール樹脂の原料。',
         svg: `<text x="90" y="90" class="chem-text">C</text>
               <line x1="90" y1="78" x2="90" y2="52" class="chem-bond"/><line x1="94" y1="78" x2="94" y2="52" class="chem-bond"/><text x="92" y="42" class="chem-text" fill="#f87171">O</text>
               <line x1="80" y1="100" x2="58" y2="120" class="chem-bond"/><text x="48" y="128" class="chem-text">H</text>
               <line x1="100" y1="100" x2="122" y2="120" class="chem-bond"/><text x="132" y="128" class="chem-text">H</text>` },
-      { id: 'acetaldehyde', name: 'アセトアルデヒド', formula: 'C2H4O', cat: 'oxygen', desc: '銀鏡反応陽性。さらにCH3-CO-構造をもつためヨードホルム反応も陽性。エタノールの酸化で生成。',
+      { id: 'acetaldehyde', name: 'アセトアルデヒド', formula: 'C2H4O', cat: 'oxygen', desc: '還元性をもち銀鏡反応・フェーリング反応陽性。さらにCH3-CO-構造をもつためヨードホルム反応も陽性。',
         svg: `<text x="50" y="100" class="chem-text">H3C</text><line x1="72" y1="100" x2="95" y2="100" class="chem-bond"/><text x="105" y="100" class="chem-text">C</text>
               <line x1="103" y1="88" x2="103" y2="60" class="chem-bond"/><line x1="108" y1="88" x2="108" y2="60" class="chem-bond"/><text x="105" y="50" class="chem-text" fill="#f87171">O</text>
               <line x1="117" y1="100" x2="140" y2="100" class="chem-bond"/><text x="150" y="100" class="chem-text">H</text>` },
-      { id: 'acetone', name: 'アセトン', formula: 'C3H6O', cat: 'oxygen', desc: '最も単純なケトン。還元性はないがヨードホルム反応は陽性。酢酸カルシウムの乾留やクメン法で生成。',
+      { id: 'acetone', name: 'アセトン', formula: 'C3H6O', cat: 'oxygen', desc: '最も単純なケトン。還元性はないがCH3-CO-構造によりヨードホルム反応は陽性。酢酸カルシウム乾留で生成。',
         svg: `<text x="90" y="100" class="chem-text">C</text>
               <line x1="88" y1="88" x2="88" y2="60" class="chem-bond"/><line x1="93" y1="88" x2="93" y2="60" class="chem-bond"/><text x="90" y="50" class="chem-text" fill="#f87171">O</text>
               <line x1="78" y1="108" x2="52" y2="124" class="chem-bond"/><text x="40" y="132" class="chem-text">H3C</text>
               <line x1="102" y1="108" x2="128" y2="124" class="chem-bond"/><text x="142" y="132" class="chem-text">CH3</text>` },
-      { id: 'formic_acid', name: 'ギ酸', formula: 'CH2O2', cat: 'oxygen', desc: 'カルボン酸でありながら-CHO（アルデヒド基）をもつため、還元性（銀鏡反応）を示す特異構造。',
+      { id: 'formic_acid', name: 'ギ酸', formula: 'CH2O2', cat: 'oxygen', desc: 'カルボン酸でありながら-CHO（アルデヒド基）をもつ。酸性を示し、さらに還元性（銀鏡反応）を示す特異構造。',
         svg: `<text x="90" y="90" class="chem-text">C</text>
               <line x1="88" y1="78" x2="88" y2="52" class="chem-bond"/><line x1="93" y1="78" x2="93" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text" fill="#f87171">O</text>
               <line x1="78" y1="90" x2="52" y2="90" class="chem-bond"/><text x="40" y="90" class="chem-text">H</text>
               <line x1="102" y1="90" x2="126" y2="90" class="chem-bond"/><text x="142" y="90" class="chem-text" fill="#f87171">OH</text>` },
-      { id: 'acetic_acid', name: '酢酸', formula: 'C2H4O2', cat: 'oxygen', desc: '食酢の主成分。純粋なものは冬季に凝固するため氷酢酸と呼ばれる。弱酸。',
+      { id: 'acetic_acid', name: '酢酸', formula: 'C2H4O2', cat: 'oxygen', desc: '食酢の主成分。純粋なものは冬季に凝固（氷酢酸）。-COOHをもつためNaHCO3からCO2発生、Naと反応してH2発生。',
         svg: `<text x="50" y="100" class="chem-text">H3C</text><line x1="72" y1="100" x2="98" y2="100" class="chem-bond"/><text x="110" y="100" class="chem-text">C</text>
               <line x1="108" y1="88" x2="108" y2="60" class="chem-bond"/><line x1="113" y1="88" x2="113" y2="60" class="chem-bond"/><text x="110" y="50" class="chem-text" fill="#f87171">O</text>
               <line x1="122" y1="100" x2="142" y2="100" class="chem-bond"/><text x="156" y="100" class="chem-text" fill="#f87171">OH</text>` },
@@ -455,15 +450,15 @@
               <text x="82" y="90" class="chem-text">C</text><line x1="80" y1="78" x2="80" y2="55" class="chem-bond"/><line x1="85" y1="78" x2="85" y2="55" class="chem-bond"/><text x="82" y="45" class="chem-text" fill="#f87171">O</text>
               <line x1="92" y1="90" x2="110" y2="90" class="chem-bond"/><text x="120" y="90" class="chem-text" fill="#f87171">O</text>
               <line x1="130" y1="90" x2="145" y2="90" class="chem-bond"/><text x="160" y="90" class="chem-text">C2H5</text>` },
-      { id: 'diethyl_ether', name: 'ジエチルエーテル', formula: 'C4H10O', cat: 'oxygen', desc: 'エタノールに濃硫酸を加え約130℃で加熱すると得られる。揮発性・引火性が極めて高い溶媒。',
+      { id: 'diethyl_ether', name: 'ジエチルエーテル', formula: 'C4H10O', cat: 'oxygen', desc: 'エタノールに濃硫酸を加え約130℃で加熱脱水すると得られる。中性で金属Naとは反応しない。引火性極大。',
         svg: `<text x="45" y="90" class="chem-text">C2H5</text><line x1="72" y1="90" x2="95" y2="90" class="chem-bond"/>
               <text x="105" y="90" class="chem-text" fill="#f87171">O</text><line x1="115" y1="90" x2="138" y2="90" class="chem-bond"/>
               <text x="158" y="90" class="chem-text">C2H5</text>` },
-      { id: 'acetic_anhydride', name: '無水酢酸', formula: 'C4H6O3', cat: 'oxygen', desc: '酢酸2分子が脱水縮合した酸無水物。サリチル酸やアニリンをアセチル化する際に用いる。',
+      { id: 'acetic_anhydride', name: '無水酢酸', formula: 'C4H6O3', cat: 'oxygen', desc: '酸無水物。サリチル酸のアセチル化（アスピリン生成）やアニリンのアセチル化（アセトアニリド生成）に用いる。',
         svg: `<text x="38" y="65" class="chem-text">H3C-CO</text><line x1="78" y1="70" x2="96" y2="85" class="chem-bond"/>
               <text x="105" y="90" class="chem-text" fill="#f87171">O</text>
               <line x1="78" y1="110" x2="96" y2="95" class="chem-bond"/><text x="38" y="115" class="chem-text">H3C-CO</text>` },
-      { id: 'acetanilide', name: 'アセトアニリド', formula: 'C8H9NO', cat: 'oxygen', desc: 'アニリンに無水酢酸を作用させてアセチル化すると得られる中性結晶（アミド結合をもつ）。',
+      { id: 'acetanilide', name: 'アセトアニリド', formula: 'C8H9NO', cat: 'oxygen', desc: 'アニリンに無水酢酸を作用させて得られる中性結晶（アミド結合 -NHCO- をもつ）。',
         svg: `<polygon points="75,70 110,90 110,130 75,150 40,130 40,90" fill="none" class="chem-bond"/>
               <line x1="75" y1="78" x2="103" y2="94" class="chem-bond"/><line x1="103" y1="126" x2="75" y2="142" class="chem-bond"/><line x1="47" y1="126" x2="47" y2="94" class="chem-bond"/>
               <line x1="75" y1="70" x2="75" y2="48" class="chem-bond"/><text x="75" y="38" class="chem-text" fill="#38bdf8">NH</text>
@@ -471,80 +466,128 @@
     ];
 
     /* ==========================================================
-       2. 反応性・構造判定テスト問題群 (12種)
+       2. 高校化学の全範囲 反応性・性質ルールマスタ (15ルール)
        ========================================================== */
-    const REACTION_TESTS = [
+    const REACTION_RULES = [
       {
-        question: 'ヨウ素と水酸化ナトリウム水溶液を加えて加熱すると、特有の黄色沈殿（ヨードホルム）を生じる分子はどれか？',
-        badge: 'ヨードホルム反応',
-        isTarget: c => ['ethanol', 'isopropanol', 'secbutanol', 'acetaldehyde', 'acetone'].includes(c.id),
-        desc: 'ヨードホルム反応は「CH3-CO-」または「CH3-CH(OH)-」の構造をもつ化合物で陽性となります。'
+        id: 'na_reaction',
+        name: '金属Naと反応してH2を発生する',
+        questionText: '単体の金属ナトリウム（Na）を加えたとき、穏やかに反応して水素ガス（H2）を発生する分子はどれか？',
+        badge: '金属Naと反応 [H2発生]',
+        isPositive: c => ['methanol', 'ethanol', 'isopropanol', 'secbutanol', 'ethylene_glycol', 'glycerol', 'phenol', 'formic_acid', 'acetic_acid', 'salicylic_acid'].includes(c.id),
+        desc: 'ヒドロキシ基（-OH）やカルボキシ基（-COOH）をもつ化合物は、金属ナトリウムと反応して水素（H2）を発生します。'
       },
       {
-        question: 'アンモニア性硝酸銀水溶液を加えて穏やかに加熱したとき、銀が析出する（銀鏡反応を示す）分子はどれか？',
+        id: 'nahco3_reaction',
+        name: 'NaHCO3水溶液と反応してCO2気泡を発生する',
+        questionText: '炭酸水素ナトリウム（NaHCO3）水溶液に加えると、弱酸の遊離により二酸化炭素（CO2）を発生する分子はどれか？',
+        badge: 'NaHCO3反応 [CO2発生]',
+        isPositive: c => ['formic_acid', 'acetic_acid', 'maleic_acid', 'fumaric_acid', 'benzoic_acid', 'salicylic_acid', 'acetylsalicylic_acid', 'phthalic_acid', 'terephthalic_acid'].includes(c.id),
+        desc: '炭酸より強い酸である「カルボキシ基（-COOH）」をもつ酸が陽性です（フェノール類は炭酸より弱いためCO2を発生しません）。'
+      },
+      {
+        id: 'fecl3_reaction',
+        name: 'FeCl3水溶液を加えると紫色〜赤紫色に呈色する',
+        questionText: '塩化鉄(III) 水溶液を加えると、特有の紫色〜赤紫色に呈色する分子はどれか？',
+        badge: 'FeCl3呈色反応',
+        isPositive: c => ['phenol', 'salicylic_acid', 'methyl_salicylate'].includes(c.id),
+        desc: 'ベンゼン環に直接結合した「フェノール性ヒドロキシ基」をもつ化合物が特有の呈色反応を示します。'
+      },
+      {
+        id: 'silver_mirror',
+        name: 'アンモニア性硝酸銀水溶液を還元して銀鏡を析出する',
+        questionText: 'アンモニア性硝酸銀水溶液を加えて穏やかに加熱したとき、銀が析出する（銀鏡反応を示す）分子はどれか？',
         badge: '銀鏡反応 [還元性]',
-        isTarget: c => ['formaldehyde', 'acetaldehyde', 'formic_acid'].includes(c.id),
-        desc: 'アルデヒド基（-CHO）をもつ化合物は還元性を示します。ギ酸はカルボン酸でありながら-CHO基をもつため陽性です。'
+        isPositive: c => ['formaldehyde', 'acetaldehyde', 'formic_acid'].includes(c.id),
+        desc: 'アルデヒド基（-CHO）をもつ化合物は強い還元性を示します。ギ酸はカルボン酸でありながら-CHO基をもつため陽性です。'
       },
       {
-        question: '塩化鉄(III) 水溶液を加えると、赤紫色〜青紫色に呈色する分子はどれか？',
-        badge: 'FeCl3 呈色反応',
-        isTarget: c => ['phenol', 'salicylic_acid', 'methyl_salicylate'].includes(c.id),
-        desc: 'ベンゼン環に直接結合したフェノール性-OH基をもつ化合物が特有の呈色反応を示します（アセチルサリチル酸はエステル化されているため呈色しません）。'
+        id: 'iodoform',
+        name: 'ヨウ素とNaOH水溶液で黄色のヨードホルム沈殿を生じる',
+        questionText: 'ヨウ素と水酸化ナトリウム水溶液を加えて加熱すると、特有の黄色沈殿（ヨードホルム CHI3）を生じる分子はどれか？',
+        badge: 'ヨードホルム反応',
+        isPositive: c => ['ethanol', 'isopropanol', 'secbutanol', 'acetaldehyde', 'acetone'].includes(c.id),
+        desc: 'ヨードホルム反応は「CH3-CO-」または「CH3-CH(OH)-」の構造をもつ化合物で特異的に起こります。'
       },
       {
-        question: '炭酸水素ナトリウム（NaHCO3）水溶液に加えると、気泡（二酸化炭素）を発生する分子はどれか？',
-        badge: '弱酸の遊離 [NaHCO3]',
-        isTarget: c => ['formic_acid', 'acetic_acid', 'maleic_acid', 'fumaric_acid', 'benzoic_acid', 'salicylic_acid', 'acetylsalicylic_acid', 'phthalic_acid', 'terephthalic_acid'].includes(c.id),
-        desc: '炭酸よりも酸性の強いカルボン酸（-COOH）をもつ分子は、NaHCO3と反応してCO2を遊離します。'
-      },
-      {
-        question: '臭素水（赤褐色）を加えたとき、付加反応によって速やかに脱色させる分子はどれか？',
-        badge: '不飽和結合・付加反応',
-        isTarget: c => ['ethene', 'ethyne', 'propene', 'styrene', 'maleic_acid', 'fumaric_acid'].includes(c.id),
+        id: 'bromine_decolor',
+        name: '臭素水（赤褐色）に付加して速やかに脱色する',
+        questionText: '臭素水（赤褐色）を加えたとき、不飽和結合への付加反応によって速やかに脱色させる分子はどれか？',
+        badge: '不飽和結合 [臭素水脱色]',
+        isPositive: c => ['ethene', 'ethyne', 'propene', 'styrene', 'maleic_acid', 'fumaric_acid'].includes(c.id),
         desc: '炭素-炭素の二重結合（C=C）や三重結合（C≡C）などの不飽和結合をもつ分子は、臭素（Br2）が付加して脱色します。'
       },
       {
-        question: '不斉炭素原子をもち、互いに重ね合わせることができない鏡像異性体（光学異性体）が存在する分子はどれか？',
-        badge: '不斉炭素・鏡像異性体',
-        isTarget: c => ['secbutanol'].includes(c.id),
-        desc: '4つの異なる原子や原子団（-H, -OH, -CH3, -C2H5）が結合した炭素（不斉炭素）をもつため、鏡像異性体が存在します。'
-      },
-      {
-        question: '水酸化ナトリウム水溶液を加えて加熱すると「けん化（エステル加水分解）」される分子はどれか？',
+        id: 'saponification',
+        name: 'NaOH水溶液で加熱するとけん化（エステル加水分解）される',
+        questionText: '水酸化ナトリウム水溶液を加えて加熱すると「けん化（エステル加水分解）」されてアルコールとカルボン酸塩になる分子はどれか？',
         badge: 'けん化 [エステル]',
-        isTarget: c => ['ethyl_acetate', 'methyl_salicylate', 'acetylsalicylic_acid'].includes(c.id),
-        desc: 'エステル結合（-COO-）をもつ化合物は、強塩基水溶液により加水分解されてカルボン酸塩とアルコールになります。'
+        isPositive: c => ['ethyl_acetate', 'methyl_salicylate', 'acetylsalicylic_acid'].includes(c.id),
+        desc: 'エステル結合（-COO-）をもつ化合物は、強塩基水溶液により加水分解（けん化）されます。'
       },
       {
-        question: '加熱すると分子内で容易に脱水し、酸無水物を生じる幾何異性体（シス体）はどれか？',
-        badge: '分子内脱水 [幾何異性体]',
-        isTarget: c => ['maleic_acid', 'phthalic_acid'].includes(c.id),
-        desc: 'マレイン酸（シス型）やフタル酸（オルト置換）は、2つのカルボキシ基が空間的に近接しているため分子内で脱水します。'
+        id: 'bleaching_powder',
+        name: 'さらし粉水溶液を加えると特有の赤紫色に呈色する',
+        questionText: 'さらし粉水溶液（次亜塩素酸カルシウム）を加えると、特有の赤紫色に呈色する分子はどれか？',
+        badge: 'さらし粉呈色 [アニリン]',
+        isPositive: c => ['aniline'].includes(c.id),
+        desc: 'アニリンなどの芳香族アミンはさらし粉水溶液によって酸化され、特有の赤紫色を呈します。'
       },
       {
-        question: 'さらし粉水溶液を加えると、特有の赤紫色に呈色する分子はどれか？',
-        badge: 'さらし粉呈色反応',
-        isTarget: c => ['aniline'].includes(c.id),
-        desc: 'アニリンはさらし粉水溶液（次亜塩素酸塩）によって酸化され、特有の赤紫色を呈します。'
+        id: 'chiral_center',
+        name: '不斉炭素原子をもち鏡像異性体（光学異性体）が存在する',
+        questionText: '分子内に不斉炭素原子（*C）をもち、互いに重ね合わせることができない鏡像異性体が存在する分子はどれか？',
+        badge: '不斉炭素・鏡像異性体',
+        isPositive: c => ['secbutanol'].includes(c.id),
+        desc: '4つの異なる原子または原子団（-H, -OH, -CH3, -C2H5）が結合した炭素（不斉炭素）をもつため鏡像異性体が存在します。'
       },
       {
-        question: '金属ナトリウム（Na）の単体を加えると、水素ガス（H2）を発生する分子はどれか？',
-        badge: 'ナトリウムとの反応',
-        isTarget: c => ['methanol', 'ethanol', 'isopropanol', 'secbutanol', 'ethylene_glycol', 'glycerol', 'phenol', 'acetic_acid'].includes(c.id),
-        desc: 'ヒドロキシ基（-OH）やカルボキシ基（-COOH）の水素原子はナトリウムにより還元され水素（H2）を発生します。'
+        id: 'intramolecular_dehydration',
+        name: '加熱すると分子内で容易に脱水して酸無水物を生じる',
+        questionText: '加熱すると分子内で容易に脱水し、環状の酸無水物を生じる幾何異性体または置換体はどれか？',
+        badge: '分子内脱水',
+        isPositive: c => ['maleic_acid', 'phthalic_acid'].includes(c.id),
+        desc: 'マレイン酸（シス型）やフタル酸（オルト置換）は2つのカルボキシ基が空間的に近接しているため加熱で分子内脱水します。'
       },
       {
-        question: 'プロペンとベンゼンから合成され、過酸化物を経てフェノールとアセトンを併産する原料分子はどれか？',
+        id: 'oxidize_to_aldehyde',
+        name: '酸化するとアルデヒドを経てカルボン酸になる（第1級アルコール）',
+        questionText: '穏やかに酸化するとアルデヒドを生じ、さらに酸化するとカルボン酸になる（第1級アルコール構造をもつ）分子はどれか？',
+        badge: '第1級アルコールの酸化',
+        isPositive: c => ['methanol', 'ethanol'].includes(c.id),
+        desc: '-CH2OH構造をもつ第1級アルコールは、酸化によりアルデヒド（-CHO）を経てカルボン酸（-COOH）へと変化します。'
+      },
+      {
+        id: 'oxidize_to_ketone',
+        name: '酸化するとケトンを生じる（第2級アルコール）',
+        questionText: '酸化剤で酸化すると、還元性のないケトン（カルボニル化合物）を生じる分子はどれか？',
+        badge: '第2級アルコールの酸化',
+        isPositive: c => ['isopropanol', 'secbutanol'].includes(c.id),
+        desc: '>CH-OH構造をもつ第2級アルコールは、酸化されると水素が取れてケトン（>C=O）になります。'
+      },
+      {
+        id: 'acetyl_agent',
+        name: 'ヒドロキシ基やアミノ基をアセチル化する試薬として用いられる',
+        questionText: 'サリチル酸やアニリンに作用させてアセチル基（-COCH3）を導入するアセチル化試薬はどれか？',
+        badge: 'アセチル化試薬',
+        isPositive: c => ['acetic_anhydride'].includes(c.id),
+        desc: '無水酢酸は強力なアセチル化試薬で、サリチル酸からアスピリン、アニリンからアセトアニリドを合成する際に用います。'
+      },
+      {
+        id: 'weak_base_neutralize',
+        name: '弱塩基性を示し、塩酸と反応して水溶性の塩をつくる',
+        questionText: '弱塩基性を示し、希塩酸を加えると塩（塩酸塩）を形成して水によく溶ける分子はどれか？',
+        badge: '弱塩基性・塩形成',
+        isPositive: c => ['aniline'].includes(c.id),
+        desc: 'アミノ基（-NH2）をもつアニリンは弱塩基性を示し、塩酸と中和してアニリン塩酸塩（水溶性）をつくります。'
+      },
+      {
+        id: 'cumene_method',
+        name: '酸化・分解によりフェノールとアセトンを併産する原料分子',
+        questionText: 'ベンゼンにプロペンを付加させて合成され、空気酸化と希硫酸処理でフェノールとアセトンを併産する分子はどれか？',
         badge: 'クメン法工業的製法',
-        isTarget: c => ['cumene'].includes(c.id),
-        desc: 'クメン法では、ベンゼンにプロペンを付加させてクメンをつくり、空気酸化と希硫酸処理でフェノールとアセトンが得られます。'
-      },
-      {
-        question: '強酸化剤で酸化すると、ポリエステル（PET）の原料である「テレフタル酸」を生成するパラ置換芳香族はどれか？',
-        badge: '芳香族の酸化反応',
-        isTarget: c => ['p_xylene'].includes(c.id),
-        desc: 'p-キシレンの2つのメチル基（-CH3）を過マンガン酸カリウム等で酸化すると、対角位にカルボキシ基をもつテレフタル酸になります。'
+        isPositive: c => ['cumene'].includes(c.id),
+        desc: 'クメン（イソプロピルベンゼン）からクメンヒドロペルオキシドを経てフェノールとアセトンを併産する工業的製法です。'
       }
     ];
 
@@ -581,7 +624,7 @@
     }
 
     /* ==========================================================
-       4. ゲーム状態管理
+       4. ゲームステート
        ========================================================== */
     let currentCategory = 'all';
     let currentMode = 'speed';
@@ -636,7 +679,7 @@
     const feedbackNextBtn = document.getElementById('feedbackNextBtn');
 
     /* ==========================================================
-       6. 初期化 & リスナー登録
+       6. イベント初期設定
        ========================================================== */
     function updateDexStats() {
       dexCollectedCount.textContent = unlockedCompounds.length;
@@ -673,7 +716,7 @@
     document.getElementById('dexCloseBtn').addEventListener('click', () => dexModal.classList.add('hidden'));
 
     /* ==========================================================
-       7. ゲーム進行ロジック
+       7. 双方向出題ロジック
        ========================================================== */
     function startGame(mode) {
       initAudio();
@@ -714,57 +757,82 @@
 
     function generateQuestion() {
       const pool = getEligiblePool();
-      const r = Math.random();
+      const pattern = Math.random();
 
-      // パターン1: 反応・性質判定テスト（40%）
-      if (r < 0.4) {
-        const availableTests = REACTION_TESTS.filter(t => pool.some(c => t.isTarget(c)));
-        if (availableTests.length > 0) {
-          const test = availableTests[Math.floor(Math.random() * availableTests.length)];
-          const targets = pool.filter(c => test.isTarget(c));
-          const correctTarget = targets[Math.floor(Math.random() * targets.length)];
+      // パターンA: 【反応 ➔ 該当する構造式を選ぶ】 (35%)
+      if (pattern < 0.35) {
+        const availableRules = REACTION_RULES.filter(r => pool.some(c => r.isPositive(c)));
+        if (availableRules.length > 0) {
+          const rule = availableRules[Math.floor(Math.random() * availableRules.length)];
+          const correctPool = pool.filter(c => rule.isPositive(c));
+          const correct = correctPool[Math.floor(Math.random() * correctPool.length)];
 
-          const nonTargets = pool.filter(c => !test.isTarget(c));
-          const shuffledWrong = nonTargets.sort(() => 0.5 - Math.random()).slice(0, 3);
-          const options = [correctTarget, ...shuffledWrong].sort(() => 0.5 - Math.random());
+          const wrongPool = pool.filter(c => !rule.isPositive(c));
+          const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+          const options = [correct, ...shuffledWrong].sort(() => 0.5 - Math.random());
 
           return {
-            type: 'reaction',
-            badge: test.badge,
-            prompt: test.question,
-            targetCompound: correctTarget,
+            modeType: 'react_to_struct',
+            badge: rule.badge,
+            prompt: rule.questionText,
+            targetCompound: correct,
             options: options,
             isStructureChoice: true,
-            desc: test.desc
+            desc: rule.desc
           };
         }
       }
 
-      // パターン2: 構造式 ➔ 名称（30%）
-      if (r < 0.7) {
+      // パターンB: 【構造・化合物 ➔ 起こる反応を選ぶ】 (35%)
+      if (pattern < 0.70) {
+        const validCompounds = pool.filter(c => REACTION_RULES.some(r => r.isPositive(c)));
+        const target = validCompounds[Math.floor(Math.random() * validCompounds.length)];
+        const correctRules = REACTION_RULES.filter(r => r.isPositive(target));
+        const correctRule = correctRules[Math.floor(Math.random() * correctRules.length)];
+
+        const wrongRules = REACTION_RULES.filter(r => !r.isPositive(target));
+        const shuffledWrongRules = wrongRules.sort(() => 0.5 - Math.random()).slice(0, 3);
+        const options = [correctRule, ...shuffledWrongRules].sort(() => 0.5 - Math.random());
+
+        return {
+          modeType: 'struct_to_react',
+          badge: '構造 ➔ 反応性判定',
+          prompt: `「${target.name}」(${target.formula}) が示す性質・反応として【正しいもの】はどれか？`,
+          targetCompound: target,
+          correctRule: correctRule,
+          options: options,
+          isStructureChoice: false,
+          isRuleOption: true,
+          desc: `${correctRule.name}：${correctRule.desc}`
+        };
+      }
+
+      // パターンC: 【構造式 ➔ 名称を当てる】 (15%)
+      if (pattern < 0.85) {
         const correct = pool[Math.floor(Math.random() * pool.length)];
         const wrongChoices = pool.filter(c => c.id !== correct.id).sort(() => 0.5 - Math.random()).slice(0, 3);
         const options = [correct, ...wrongChoices].sort(() => 0.5 - Math.random());
 
         return {
-          type: 'struct_to_name',
-          badge: '構造 ➔ 名称',
-          prompt: 'この構造式をもつ化合物の名称はどれか？',
+          modeType: 'struct_to_name',
+          badge: '構造 ➔ 化合物名',
+          prompt: 'この構造式をもつ化合物の正確な名称はどれか？',
           targetCompound: correct,
           options: options,
           isStructureChoice: false,
+          isRuleOption: false,
           desc: correct.desc
         };
       }
 
-      // パターン3: 名称・特徴 ➔ 構造式（30%）
+      // パターンD: 【名称・特徴 ➔ 構造式を選ぶ】 (15%)
       const correct = pool[Math.floor(Math.random() * pool.length)];
       const wrongChoices = pool.filter(c => c.id !== correct.id).sort(() => 0.5 - Math.random()).slice(0, 3);
       const options = [correct, ...wrongChoices].sort(() => 0.5 - Math.random());
 
       return {
-        type: 'name_to_struct',
-        badge: '名称 ➔ 構造',
+        modeType: 'name_to_struct',
+        badge: '名称 ➔ 構造式',
         prompt: `「${correct.name}」(${correct.formula}) の正確な構造式を選べ！`,
         targetCompound: correct,
         options: options,
@@ -790,6 +858,7 @@
       questionTypeBadge.textContent = currentQuiz.badge;
       questionPrompt.textContent = currentQuiz.prompt;
 
+      // 構造式上部提示が必要な形式か判定
       if (!currentQuiz.isStructureChoice) {
         questionSvgContainer.classList.remove('hidden');
         questionSvg.innerHTML = currentQuiz.targetCompound.svg;
@@ -798,26 +867,36 @@
         questionSvgContainer.classList.add('hidden');
       }
 
+      // 4択グリッドの生成
       optionsGrid.innerHTML = '';
       currentQuiz.options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'btn-cyber flex flex-col items-center justify-center p-1 sm:p-2 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-cyan-400 active:scale-95 transition-all w-full h-full relative overflow-hidden';
-        
+
         if (currentQuiz.isStructureChoice) {
+          // 4つの構造式から選ぶ
           btn.innerHTML = `
             <div class="w-full h-[75%] flex items-center justify-center pointer-events-none">
               <svg viewBox="0 0 180 180" class="w-full h-full object-contain">${opt.svg}</svg>
             </div>
             <span class="text-[10px] font-mono text-cyan-300/80 mt-0.5 tracking-wider">${opt.formula}</span>
           `;
-        } else {
+          btn.addEventListener('click', () => handleAnswer(opt.id, opt));
+        } else if (currentQuiz.isRuleOption) {
+          // 4つの反応・性質文から選ぶ
           btn.innerHTML = `
-            <span class="text-sm sm:text-base font-bold text-white leading-snug px-1 w-full truncate">${opt.name}</span>
+            <span class="text-xs sm:text-sm font-bold text-white leading-snug px-1 line-clamp-3 text-center">${opt.name}</span>
+          `;
+          btn.addEventListener('click', () => handleAnswer(opt.id, opt));
+        } else {
+          // 4つの名称から選ぶ
+          btn.innerHTML = `
+            <span class="text-sm sm:text-base font-bold text-white leading-snug px-1 w-full truncate text-center">${opt.name}</span>
             <span class="text-[11px] font-mono text-cyan-300/80 mt-0.5">${opt.formula}</span>
           `;
+          btn.addEventListener('click', () => handleAnswer(opt.id, opt));
         }
 
-        btn.addEventListener('click', () => handleAnswer(opt.id, btn));
         optionsGrid.appendChild(btn);
       });
 
@@ -852,12 +931,17 @@
       }, interval);
     }
 
-    function handleAnswer(selectedId, clickedBtn) {
+    function handleAnswer(selectedId, selectedOpt) {
       if (isAnswering) return;
       isAnswering = true;
       clearInterval(timerId);
 
-      const isCorrect = (selectedId === currentQuiz.targetCompound.id);
+      let isCorrect = false;
+      if (currentQuiz.isRuleOption) {
+        isCorrect = (selectedId === currentQuiz.correctRule.id);
+      } else {
+        isCorrect = (selectedId === currentQuiz.targetCompound.id);
+      }
 
       if (isCorrect) {
         playSfx('correct');
@@ -884,7 +968,9 @@
 
         feedbackIcon.textContent = '⭕ CORRECT!';
         feedbackTitle.className = 'text-base font-black text-cyan-400';
-        feedbackTitle.textContent = `${currentQuiz.targetCompound.name}（正解）`;
+        feedbackTitle.textContent = currentQuiz.isRuleOption 
+          ? `${currentQuiz.correctRule.name}（正解）` 
+          : `${currentQuiz.targetCompound.name}（正解）`;
       } else {
         playSfx('wrong');
         combo = 0;
@@ -899,7 +985,9 @@
 
         feedbackIcon.textContent = (selectedId === null) ? '⏳ TIME OVER!' : '❌ INCORRECT...';
         feedbackTitle.className = 'text-base font-black text-rose-400';
-        feedbackTitle.textContent = `正解は: ${currentQuiz.targetCompound.name}`;
+        feedbackTitle.textContent = currentQuiz.isRuleOption 
+          ? `正解: ${currentQuiz.correctRule.name}` 
+          : `正解: ${currentQuiz.targetCompound.name}`;
       }
 
       feedbackDesc.textContent = currentQuiz.desc;
@@ -935,7 +1023,7 @@
       let title = '見習い研究員';
       if (score >= 5000) title = '🧪 ノーベル化学賞級 主任研究員';
       else if (score >= 3500) title = '⌬ 有機合成スペシャリスト';
-      else if (score >= 2000) title = '📘 入試突破レベル研究員';
+      else if (score >= 2000) title = '📘 共通テスト満点レベル';
       document.getElementById('resultTitleGrade').textContent = `称号: ${title}`;
     }
 
