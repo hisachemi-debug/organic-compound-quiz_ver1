@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Organic Chem Quest | 有機化学構造・反応マスター</title>
+  <title>Organic Chem Quest | 有機化学構造式バトル</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <style>
@@ -13,6 +13,9 @@
       --bg-dark: #0a0f1d;
       --panel-bg: rgba(16, 24, 46, 0.88);
       --border-cyan: #06b6d4;
+      --glow-cyan: rgba(6, 182, 212, 0.4);
+      --accent-yellow: #fbbf24;
+      --accent-pink: #ec4899;
     }
 
     body {
@@ -57,6 +60,7 @@
       100% { box-shadow: 0 0 30px rgba(251, 191, 36, 0.8); border-color: #fbbf24; }
     }
 
+    /* 構造式SVGの描画設定 */
     .chem-text {
       font-family: 'JetBrains Mono', 'Noto Sans JP', sans-serif;
       font-size: 14px;
@@ -79,7 +83,7 @@
 </head>
 <body class="flex flex-col h-[100dvh] w-full max-w-xl mx-auto p-1.5 sm:p-3 relative overflow-hidden">
 
-  <!-- TOP HUD -->
+  <!-- ================= TOP HUD ================= -->
   <header class="flex items-center justify-between px-3 py-1.5 cyber-panel rounded-xl shrink-0 mb-1.5">
     <div class="flex items-center space-x-2">
       <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
@@ -95,68 +99,90 @@
     </div>
   </header>
 
-  <!-- VIEW 1: タイトル・分野選択 -->
-  <main id="titleView" class="flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-3 sm:p-4 text-center">
+  <!-- ================= VIEW 1: タイトル・分野選択画面 ================= -->
+  <main id="titleView" class="flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-2.5 sm:p-4 text-center">
     <div class="shrink-0">
-      <div class="inline-block px-3 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[11px] font-mono tracking-widest mb-1">
+      <div class="inline-block px-3 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[10px] sm:text-[11px] font-mono tracking-widest mb-0.5">
         HIGH SCHOOL ORGANIC BATTLE
       </div>
-      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-300">
+      <h1 class="text-xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-300 leading-tight">
         有機構造式クエスト
       </h1>
-      <p class="text-[11px] text-slate-400">高校基礎〜共通テスト：官能基・反応性完全マスター</p>
+      <p class="text-[10px] sm:text-[11px] text-slate-400">高校化学教科書・共通テスト完全準拠</p>
     </div>
 
-    <!-- 分野セレクト -->
+    <!-- 分野セレクト（3行×2列グリッドで全5ジャンル＋全分野を綺麗に収容） -->
     <div class="my-auto py-1 w-full">
-      <div class="text-[11px] font-bold text-cyan-400 text-left mb-1.5 flex items-center gap-1 px-1">
+      <div class="text-[10px] sm:text-[11px] font-bold text-cyan-400 text-left mb-1 flex items-center gap-1 px-1">
         <span>▼ 出題分野を選択</span>
       </div>
       <div class="grid grid-cols-2 gap-1.5 w-full">
-        <button data-cat="all" class="cat-btn active-cat p-2.5 rounded-xl border text-left flex flex-col justify-center bg-cyan-950/60 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+        <!-- 全分野 -->
+        <button data-cat="all" class="cat-btn active-cat p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-cyan-950/60 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
           <div class="flex justify-between items-center w-full">
-            <span class="text-xs font-bold text-white">⚡ 全分野ミックス</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500 text-slate-900 font-bold">36種</span>
+            <span class="text-[11px] sm:text-xs font-bold text-white">⚡ 全分野ミックス</span>
+            <span class="text-[9px] px-1 rounded bg-cyan-500 text-slate-900 font-bold">36種</span>
           </div>
-          <span class="text-[10px] text-slate-300 mt-1 leading-tight">総合実戦トレーニング</span>
+          <span class="text-[9px] sm:text-[10px] text-slate-300 mt-0.5 leading-tight">総合実戦トレーニング</span>
         </button>
 
-        <button data-cat="aliphatic" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+        <!-- 第5ジャンル: 官能基・構造の基本 -->
+        <button data-cat="basic" class="cat-btn p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
           <div class="flex justify-between items-center w-full">
-            <span class="text-xs font-bold text-white">🧪 脂肪族化合物</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">12種</span>
+            <span class="text-[11px] sm:text-xs font-bold text-amber-300">🔰 官能基・構造基本</span>
+            <span class="text-[9px] px-1 rounded bg-amber-500 text-slate-950 font-bold">特訓</span>
           </div>
-          <span class="text-[10px] text-slate-400 mt-1 leading-tight">アルケン・アルキン・アルコール</span>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-tight">-OH/Na, -COOH/NaHCO3等</span>
         </button>
 
-        <button data-cat="aromatic" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+        <!-- 脂肪族 -->
+        <button data-cat="aliphatic" class="cat-btn p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
           <div class="flex justify-between items-center w-full">
-            <span class="text-xs font-bold text-white">⌬ 芳香族化合物</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">15種</span>
+            <span class="text-[11px] sm:text-xs font-bold text-white">🧪 脂肪族化合物</span>
+            <span class="text-[9px] px-1 rounded bg-slate-700 text-slate-200">12種</span>
           </div>
-          <span class="text-[10px] text-slate-400 mt-1 leading-tight">ベンゼン環・フェノール類</span>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-tight">アルケン・アルキン・アルコール</span>
         </button>
 
-        <button data-cat="oxygen" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+        <!-- 芳香族 -->
+        <button data-cat="aromatic" class="cat-btn p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
           <div class="flex justify-between items-center w-full">
-            <span class="text-xs font-bold text-white">❄️ 酸素・窒素含有</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">9種</span>
+            <span class="text-[11px] sm:text-xs font-bold text-white">⌬ 芳香族化合物</span>
+            <span class="text-[9px] px-1 rounded bg-slate-700 text-slate-200">15種</span>
           </div>
-          <span class="text-[10px] text-slate-400 mt-1 leading-tight">カルボン酸・エステル・アミン</span>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-tight">ベンゼン環・フェノール類</span>
+        </button>
+
+        <!-- 酸素含有 -->
+        <button data-cat="oxygen" class="cat-btn p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-[11px] sm:text-xs font-bold text-white">❄️ 酸素含有化合物</span>
+            <span class="text-[9px] px-1 rounded bg-slate-700 text-slate-200">7種</span>
+          </div>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-tight">アルデヒド・ケトン・エステル</span>
+        </button>
+
+        <!-- 窒素含有 -->
+        <button data-cat="nitrogen" class="cat-btn p-2 sm:p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-[11px] sm:text-xs font-bold text-white">🌿 窒素含有化合物</span>
+            <span class="text-[9px] px-1 rounded bg-slate-700 text-slate-200">2種</span>
+          </div>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-tight">アミン・アミド・ニトロ化合物</span>
         </button>
       </div>
     </div>
 
-    <!-- モード選択 -->
+    <!-- モード選択 & スタート -->
     <div class="space-y-1.5 shrink-0 w-full">
       <div class="grid grid-cols-2 gap-2">
         <button id="startSpeedBtn" class="btn-cyber p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold text-white shadow-lg shadow-cyan-500/30 flex flex-col items-center">
           <span class="text-xs tracking-wider">SPEED ATTACK</span>
-          <span class="text-[11px] font-normal opacity-90">10問タイム勝負</span>
+          <span class="text-[10px] sm:text-[11px] font-normal opacity-90">10問タイム勝負</span>
         </button>
         <button id="startSurvivalBtn" class="btn-cyber p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-pink-500/30 flex flex-col items-center">
           <span class="text-xs tracking-wider">SURVIVAL</span>
-          <span class="text-[11px] font-normal opacity-90">HP制エンドレス</span>
+          <span class="text-[10px] sm:text-[11px] font-normal opacity-90">HP制エンドレス</span>
         </button>
       </div>
       <div class="text-[10px] text-slate-400 font-mono">
@@ -165,7 +191,7 @@
     </div>
   </main>
 
-  <!-- VIEW 2: バトル画面 (1画面完全固定) -->
+  <!-- ================= VIEW 2: バトル画面 (1画面完全固定・スクロールなし) ================= -->
   <main id="battleView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-2 sm:p-3 relative">
     
     <!-- HUD -->
@@ -192,12 +218,13 @@
       <div id="timerBar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 w-full transition-all duration-100 ease-linear"></div>
     </div>
 
-    <!-- 問題文 & 構造式提示領域 -->
+    <!-- 問題表示領域（横幅フル活用で改行を自然に） -->
     <div class="flex-1 flex flex-col items-center justify-center min-h-0 py-0.5 text-center w-full px-1">
       <h2 id="questionPrompt" class="w-full text-xs sm:text-sm font-bold text-slate-100 mb-1 leading-snug break-words">
         <!-- JSで挿入 -->
       </h2>
 
+      <!-- 構造式問題のSVG枠（高さ最大追従） -->
       <div id="questionSvgContainer" class="w-full max-w-[190px] h-24 sm:h-28 flex items-center justify-center bg-slate-900/90 rounded-xl border border-slate-700/80 p-1 shadow-inner relative">
         <svg id="questionSvg" class="w-full h-full object-contain" viewBox="0 0 180 180"></svg>
         <span id="questionFormula" class="absolute bottom-1 right-2 text-[9px] font-mono text-slate-400/80"></span>
@@ -209,7 +236,7 @@
       <!-- JSで4つのボタンを生成 -->
     </div>
 
-    <!-- 解説トースト -->
+    <!-- 即時解説モーダル -->
     <div id="answerFeedbackModal" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center justify-between text-center">
       <div id="feedbackIcon" class="text-3xl my-auto">⭕</div>
       <div class="w-full px-1">
@@ -222,7 +249,7 @@
     </div>
   </main>
 
-  <!-- VIEW 3: リザルト画面 -->
+  <!-- ================= VIEW 3: リザルト画面 ================= -->
   <main id="resultView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-4 text-center">
     <div class="shrink-0">
       <span class="text-xs font-mono text-cyan-400">OPERATION COMPLETED</span>
@@ -257,7 +284,7 @@
     </div>
   </main>
 
-  <!-- VIEW 4: 分子図鑑（Dex）モーダル -->
+  <!-- ================= VIEW 4: 分子図鑑（Dex）モーダル ================= -->
   <div id="dexModal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md p-3 flex flex-col justify-between">
     <div class="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
       <h3 class="text-base font-bold text-cyan-300 flex items-center gap-1.5">
@@ -270,7 +297,8 @@
       <button data-filter="all" class="dex-tab active-dex px-2.5 py-1 rounded bg-cyan-500 text-slate-900 shrink-0">すべて (36)</button>
       <button data-filter="aliphatic" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">脂肪族</button>
       <button data-filter="aromatic" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">芳香族</button>
-      <button data-filter="oxygen" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">酸素・窒素</button>
+      <button data-filter="oxygen" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">酸素含有</button>
+      <button data-filter="nitrogen" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">窒素含有</button>
     </div>
 
     <div id="dexList" class="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1 my-1"></div>
@@ -360,12 +388,12 @@
               <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
               <line x1="85" y1="60" x2="85" y2="38" class="chem-bond"/><text x="85" y="28" class="chem-text">CH3</text>
               <line x1="120" y1="80" x2="140" y2="68" class="chem-bond"/><text x="155" y="62" class="chem-text">CH3</text>` },
-      { id: 'p_xylene', name: 'p-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,4-ジメチルベンゼン。酸化するとテレフタル酸（ポリエステル合成原料）が得られる。',
+      { id: 'p_xylene', name: 'p-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,4-ジメチルベンゼン。酸化するとテレフタル酸（ポリエステル原料）が得られる。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text">CH3</text>
               <line x1="90" y1="135" x2="90" y2="154" class="chem-bond"/><text x="90" y="164" class="chem-text">CH3</text>` },
-      { id: 'styrene', name: 'スチレン', formula: 'C8H8', cat: 'aromatic', desc: 'ビニルベンゼン。側鎖二重結合により臭素水を付加脱色する。付加重合でポリスチレン。',
+      { id: 'styrene', name: 'スチレン', formula: 'C8H8', cat: 'aromatic', desc: 'ビニルベンゼン。側鎖二重結合が臭素水を脱色する。付加重合でポリスチレン。',
         svg: `<polygon points="80,70 115,90 115,130 80,150 45,130 45,90" fill="none" class="chem-bond"/>
               <line x1="80" y1="78" x2="108" y2="94" class="chem-bond"/><line x1="108" y1="126" x2="80" y2="142" class="chem-bond"/><line x1="52" y1="126" x2="52" y2="94" class="chem-bond"/>
               <line x1="80" y1="70" x2="80" y2="48" class="chem-bond"/><text x="85" y="38" class="chem-text">CH</text>
@@ -416,12 +444,12 @@
               <line x1="90" y1="64" x2="118" y2="80" class="chem-bond"/><line x1="118" y1="112" x2="90" y2="128" class="chem-bond"/><line x1="62" y1="112" x2="62" y2="80" class="chem-bond"/>
               <line x1="90" y1="56" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text" fill="#f87171">COOH</text>
               <line x1="90" y1="136" x2="90" y2="154" class="chem-bond"/><text x="90" y="165" class="chem-text" fill="#f87171">COOH</text>` },
-      { id: 'aniline', name: 'アニリン', formula: 'C6H7N', cat: 'aromatic', desc: '芳香族第1級アミン。弱塩基性で塩酸に溶ける。さらし粉水溶液で赤紫色呈色。亜硝酸ナトリウムと塩酸でジアゾ化。',
+      { id: 'aniline', name: 'アニリン', formula: 'C6H7N', cat: 'nitrogen', desc: '芳香族第1級アミン。弱塩基性で塩酸に溶ける。さらし粉水溶液で赤紫色呈色。亜硝酸ナトリウムと塩酸でジアゾ化。',
         svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
               <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
               <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#38bdf8">NH2</text>` },
 
-      // 酸素・窒素含有 (9)
+      // 酸素含有 (7)
       { id: 'formaldehyde', name: 'ホルムアルデヒド', formula: 'CH2O', cat: 'oxygen', desc: '刺激臭の気体。還元性をもち銀鏡反応・フェーリング反応を示す。フェノール樹脂の原料。',
         svg: `<text x="90" y="90" class="chem-text">C</text>
               <line x1="90" y1="78" x2="90" y2="52" class="chem-bond"/><line x1="94" y1="78" x2="94" y2="52" class="chem-bond"/><text x="92" y="42" class="chem-text" fill="#f87171">O</text>
@@ -454,11 +482,13 @@
         svg: `<text x="45" y="90" class="chem-text">C2H5</text><line x1="72" y1="90" x2="95" y2="90" class="chem-bond"/>
               <text x="105" y="90" class="chem-text" fill="#f87171">O</text><line x1="115" y1="90" x2="138" y2="90" class="chem-bond"/>
               <text x="158" y="90" class="chem-text">C2H5</text>` },
+
+      // 窒素含有 / その他 (2)
       { id: 'acetic_anhydride', name: '無水酢酸', formula: 'C4H6O3', cat: 'oxygen', desc: '酸無水物。サリチル酸のアセチル化（アスピリン生成）やアニリンのアセチル化（アセトアニリド生成）に用いる。',
         svg: `<text x="38" y="65" class="chem-text">H3C-CO</text><line x1="78" y1="70" x2="96" y2="85" class="chem-bond"/>
               <text x="105" y="90" class="chem-text" fill="#f87171">O</text>
               <line x1="78" y1="110" x2="96" y2="95" class="chem-bond"/><text x="38" y="115" class="chem-text">H3C-CO</text>` },
-      { id: 'acetanilide', name: 'アセトアニリド', formula: 'C8H9NO', cat: 'oxygen', desc: 'アニリンに無水酢酸を作用させて得られる中性結晶（アミド結合 -NHCO- をもつ）。',
+      { id: 'acetanilide', name: 'アセトアニリド', formula: 'C8H9NO', cat: 'nitrogen', desc: 'アニリンに無水酢酸を作用させて得られる中性結晶（アミド結合 -NHCO- をもつ）。',
         svg: `<polygon points="75,70 110,90 110,130 75,150 40,130 40,90" fill="none" class="chem-bond"/>
               <line x1="75" y1="78" x2="103" y2="94" class="chem-bond"/><line x1="103" y1="126" x2="75" y2="142" class="chem-bond"/><line x1="47" y1="126" x2="47" y2="94" class="chem-bond"/>
               <line x1="75" y1="70" x2="75" y2="48" class="chem-bond"/><text x="75" y="38" class="chem-text" fill="#38bdf8">NH</text>
@@ -466,12 +496,12 @@
     ];
 
     /* ==========================================================
-       2. 高校化学の全範囲 反応性・性質ルールマスタ (15ルール)
+       2. 高校化学 全範囲の基礎官能基・構造・反応性ルールマスタ (15種)
        ========================================================== */
     const REACTION_RULES = [
       {
         id: 'na_reaction',
-        name: '金属Naと反応してH2を発生する',
+        name: '金属Naと反応して水素ガス（H2）を発生する',
         questionText: '単体の金属ナトリウム（Na）を加えたとき、穏やかに反応して水素ガス（H2）を発生する分子はどれか？',
         badge: '金属Naと反応 [H2発生]',
         isPositive: c => ['methanol', 'ethanol', 'isopropanol', 'secbutanol', 'ethylene_glycol', 'glycerol', 'phenol', 'formic_acid', 'acetic_acid', 'salicylic_acid'].includes(c.id),
@@ -479,7 +509,7 @@
       },
       {
         id: 'nahco3_reaction',
-        name: 'NaHCO3水溶液と反応してCO2気泡を発生する',
+        name: 'NaHCO3水溶液と反応して二酸化炭素（CO2）を発生する',
         questionText: '炭酸水素ナトリウム（NaHCO3）水溶液に加えると、弱酸の遊離により二酸化炭素（CO2）を発生する分子はどれか？',
         badge: 'NaHCO3反応 [CO2発生]',
         isPositive: c => ['formic_acid', 'acetic_acid', 'maleic_acid', 'fumaric_acid', 'benzoic_acid', 'salicylic_acid', 'acetylsalicylic_acid', 'phthalic_acid', 'terephthalic_acid'].includes(c.id),
@@ -575,7 +605,7 @@
       },
       {
         id: 'weak_base_neutralize',
-        name: '弱塩基性を示し、塩酸と反応して水溶性の塩をつくる',
+        name: '弱塩基性を示し、希塩酸と反応して水溶性の塩をつくる',
         questionText: '弱塩基性を示し、希塩酸を加えると塩（塩酸塩）を形成して水によく溶ける分子はどれか？',
         badge: '弱塩基性・塩形成',
         isPositive: c => ['aniline'].includes(c.id),
@@ -679,7 +709,7 @@
     const feedbackNextBtn = document.getElementById('feedbackNextBtn');
 
     /* ==========================================================
-       6. イベント初期設定
+       6. 初期化 & リスナー登録
        ========================================================== */
     function updateDexStats() {
       dexCollectedCount.textContent = unlockedCompounds.length;
@@ -716,7 +746,7 @@
     document.getElementById('dexCloseBtn').addEventListener('click', () => dexModal.classList.add('hidden'));
 
     /* ==========================================================
-       7. 双方向出題ロジック
+       7. 双方向出題ロジック（構造 ➔ 反応性、反応性 ➔ 構造）
        ========================================================== */
     function startGame(mode) {
       initAudio();
@@ -751,7 +781,7 @@
     }
 
     function getEligiblePool() {
-      if (currentCategory === 'all') return COMPOUNDS;
+      if (currentCategory === 'all' || currentCategory === 'basic') return COMPOUNDS;
       return COMPOUNDS.filter(c => c.cat === currentCategory);
     }
 
@@ -759,8 +789,11 @@
       const pool = getEligiblePool();
       const pattern = Math.random();
 
-      // パターンA: 【反応 ➔ 該当する構造式を選ぶ】 (35%)
-      if (pattern < 0.35) {
+      // 第5ジャンル「basic」が選ばれた場合は、構造と反応性の双方向テストを100%集中出題
+      const isBasicMode = (currentCategory === 'basic');
+
+      // パターンA: 【反応性・性質 ➔ 該当する構造式SVGを選ぶ】 (通常35%、basic時は50%)
+      if (isBasicMode ? (pattern < 0.5) : (pattern < 0.35)) {
         const availableRules = REACTION_RULES.filter(r => pool.some(c => r.isPositive(c)));
         if (availableRules.length > 0) {
           const rule = availableRules[Math.floor(Math.random() * availableRules.length)];
@@ -778,13 +811,14 @@
             targetCompound: correct,
             options: options,
             isStructureChoice: true,
+            isRuleOption: false,
             desc: rule.desc
           };
         }
       }
 
-      // パターンB: 【構造・化合物 ➔ 起こる反応を選ぶ】 (35%)
-      if (pattern < 0.70) {
+      // パターンB: 【構造式・化合物 ➔ 起こる反応・性質を選ぶ】 (通常35%、basic時は50%)
+      if (isBasicMode ? true : (pattern < 0.70)) {
         const validCompounds = pool.filter(c => REACTION_RULES.some(r => r.isPositive(c)));
         const target = validCompounds[Math.floor(Math.random() * validCompounds.length)];
         const correctRules = REACTION_RULES.filter(r => r.isPositive(target));
@@ -796,7 +830,7 @@
 
         return {
           modeType: 'struct_to_react',
-          badge: '構造 ➔ 反応性判定',
+          badge: '構造 ➔ 性質・反応性',
           prompt: `「${target.name}」(${target.formula}) が示す性質・反応として【正しいもの】はどれか？`,
           targetCompound: target,
           correctRule: correctRule,
@@ -837,6 +871,7 @@
         targetCompound: correct,
         options: options,
         isStructureChoice: true,
+        isRuleOption: false,
         desc: correct.desc
       };
     }
@@ -858,7 +893,6 @@
       questionTypeBadge.textContent = currentQuiz.badge;
       questionPrompt.textContent = currentQuiz.prompt;
 
-      // 構造式上部提示が必要な形式か判定
       if (!currentQuiz.isStructureChoice) {
         questionSvgContainer.classList.remove('hidden');
         questionSvg.innerHTML = currentQuiz.targetCompound.svg;
@@ -867,14 +901,13 @@
         questionSvgContainer.classList.add('hidden');
       }
 
-      // 4択グリッドの生成
       optionsGrid.innerHTML = '';
       currentQuiz.options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'btn-cyber flex flex-col items-center justify-center p-1 sm:p-2 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-cyan-400 active:scale-95 transition-all w-full h-full relative overflow-hidden';
 
         if (currentQuiz.isStructureChoice) {
-          // 4つの構造式から選ぶ
+          // 4つの構造式SVGから選ぶ
           btn.innerHTML = `
             <div class="w-full h-[75%] flex items-center justify-center pointer-events-none">
               <svg viewBox="0 0 180 180" class="w-full h-full object-contain">${opt.svg}</svg>
