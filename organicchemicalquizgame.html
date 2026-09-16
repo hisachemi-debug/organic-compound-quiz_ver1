@@ -2,2246 +2,1016 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChemiMaster - 有機構造バトル</title>
-  <!-- Tailwind CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Organic Chem Quest | 有機化学構造式バトル</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Tone.js for game sounds -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <!-- Canvas Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            chem: {
-              dark: '#0d1117',
-              panel: '#161b22',
-              border: '#30363d',
-              accent: '#10b981',
-              neon: '#06b6d4',
-              fever: '#f59e0b',
-              danger: '#ef4444'
-            }
-          },
-          keyframes: {
-            pulseGlow: {
-              '0%, 100%': { boxShadow: '0 0 15px rgba(6, 182, 212, 0.4)' },
-              '50%': { boxShadow: '0 0 30px rgba(6, 182, 212, 0.8)' }
-            },
-            feverAnim: {
-              '0%, 100%': { transform: 'scale(1)', filter: 'drop-shadow(0 0 10px #f59e0b)' },
-              '50%': { transform: 'scale(1.05)', filter: 'drop-shadow(0 0 20px #ef4444)' }
-            },
-            shake: {
-              '0%, 100%': { transform: 'translateX(0)' },
-              '20%, 60%': { transform: 'translateX(-6px)' },
-              '40%, 80%': { transform: 'translateX(6px)' }
-            }
-          },
-          animation: {
-            glow: 'pulseGlow 2s infinite',
-            fever: 'feverAnim 1s infinite',
-            shake: 'shake 0.4s ease-in-out'
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+JP:wght@400;600;700&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Noto+Sans+JP:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap');
+
+    :root {
+      --bg-dark: #0a0f1d;
+      --panel-bg: rgba(16, 24, 46, 0.88);
+      --border-cyan: #06b6d4;
+      --glow-cyan: rgba(6, 182, 212, 0.4);
+      --accent-yellow: #fbbf24;
+      --accent-pink: #ec4899;
+    }
+
     body {
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: #080c14;
+      background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.15), transparent),
-        radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.08), transparent 40%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
-      color: #f1f5f9;
+        radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15), transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+      color: #f8fafc;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       user-select: none;
-      -webkit-user-select: none;
+      height: 100dvh;
+      overflow: hidden;
     }
 
-    .font-chakra {
-      font-family: 'Chakra Petch', sans-serif;
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .cyber-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(56, 189, 248, 0.05);
     }
 
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    .btn-cyber {
+      position: relative;
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    ::-webkit-scrollbar-track {
-      background: #111827;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #374151;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #4b5563;
+    .btn-cyber:active {
+      transform: scale(0.97);
     }
 
-    /* Chemical SVG stroke aesthetics */
+    .fever-glow {
+      animation: feverPulse 1s infinite alternate;
+    }
+    @keyframes feverPulse {
+      0% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); border-color: #ec4899; }
+      100% { box-shadow: 0 0 30px rgba(251, 191, 36, 0.8); border-color: #fbbf24; }
+    }
+
+    /* 構造式SVGの描画設定 */
+    .chem-text {
+      font-family: 'JetBrains Mono', 'Noto Sans JP', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      fill: #ffffff;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
     .chem-bond {
-      stroke: #cbd5e1;
-      stroke-width: 2.4;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .chem-bond-double {
-      stroke: #cbd5e1;
+      stroke: #38bdf8;
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .chem-txt {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-weight: 700;
-      text-anchor: middle;
-      dominant-baseline: central;
+    .chem-bond-double {
+      stroke: #38bdf8;
+      stroke-width: 2;
     }
-    .chem-atom-o { fill: #f87171; }
-    .chem-atom-n { fill: #60a5fa; }
-    .chem-atom-c { fill: #f1f5f9; }
-    .chem-atom-h { fill: #cbd5e1; }
-    .chem-atom-cl { fill: #4ade80; }
   </style>
 </head>
+<body class="flex flex-col h-[100dvh] w-full max-w-xl mx-auto p-1.5 sm:p-3 relative overflow-hidden">
 
-<body class="min-h-screen flex flex-col justify-between overflow-x-hidden antialiased selection:bg-cyan-500 selection:text-black">
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="showScreen('title-screen')">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-slate-950 font-black text-xl">
-          ⬡
-        </div>
-        <div>
-          <h1 class="font-chakra font-bold text-lg md:text-xl tracking-wider text-white flex items-center gap-1.5">
-            CHEMI<span class="text-cyan-400">MASTER</span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-normal border border-emerald-500/30">LAB</span>
-          </h1>
-          <p class="text-xs text-slate-400 hidden sm:block">有機化学・構造式マスターゲーム</p>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-2 sm:space-x-4">
-        <!-- Audio toggle button -->
-        <button id="audio-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700 flex items-center gap-1.5 text-xs">
-          <i data-lucide="volume-2" class="w-4 h-4"></i>
-          <span class="hidden sm:inline" id="audio-text">SOUND ON</span>
-        </button>
-
-        <!-- Codex/Book button -->
-        <button onclick="openCodexModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-colors flex items-center gap-1.5 text-xs font-semibold">
-          <i data-lucide="book-open" class="w-4 h-4"></i>
-          <span>分子図鑑</span>
-          <span id="codex-counter-badge" class="ml-1 px-1.5 py-0.2 bg-cyan-950 text-cyan-400 text-[10px] rounded-full border border-cyan-700">0/36</span>
-        </button>
-      </div>
+  <!-- ================= TOP HUD ================= -->
+  <header class="flex items-center justify-between px-3 py-1.5 cyber-panel rounded-xl shrink-0 mb-1.5">
+    <div class="flex items-center space-x-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+      <span class="font-teko tracking-wider text-xl text-cyan-300">ORG-CHEM BATTLE</span>
+    </div>
+    <div class="flex items-center space-x-2 text-xs">
+      <button id="soundToggleBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-600 text-slate-300 active:scale-95">
+        🔊 <span id="soundLabel">ON</span>
+      </button>
+      <button id="navDexBtn" class="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 font-bold active:scale-95">
+        📖 図鑑 (<span id="dexCollectedCount">0</span>/36)
+      </button>
     </div>
   </header>
 
-  <main class="flex-1 max-w-5xl w-full mx-auto p-4 flex flex-col items-center justify-center relative">
-
-    <!-- Screen 1: Redesigned Title & Mode Select Screen -->
-    <div id="title-screen" class="w-full max-w-3xl flex flex-col items-center space-y-6 py-2">
-      
-      <!-- Top Cyber Status Ribbon -->
-      <div class="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-md font-chakra text-xs">
-        <div class="flex items-center gap-2">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-          </span>
-          <span class="text-slate-400 tracking-wider">LAB OPERATIONAL</span>
-        </div>
-        <div class="flex items-center gap-4 text-xs">
-          <div><span class="text-slate-500">HIGH SCORE:</span> <span id="top-score-display" class="font-bold text-cyan-400">0</span></div>
-          <div class="w-px h-3 bg-slate-800"></div>
-          <div><span class="text-slate-500">MAX COMBO:</span> <span id="max-combo-display" class="font-bold text-amber-400">0</span>x</div>
-          <div class="w-px h-3 bg-slate-800 hidden sm:block"></div>
-          <div class="hidden sm:block"><span class="text-slate-500">UNLOCKED:</span> <span id="header-unlocked-rate" class="font-bold text-emerald-400">0%</span></div>
-        </div>
+  <!-- ================= VIEW 1: タイトル・分野選択画面 ================= -->
+  <main id="titleView" class="flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-3 sm:p-4 text-center">
+    <div class="shrink-0">
+      <div class="inline-block px-3 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[11px] font-mono tracking-widest mb-1">
+        HIGH SCHOOL ORGANIC BATTLE
       </div>
-
-      <!-- Hero Banner -->
-      <div class="relative w-full text-center py-4 sm:py-6">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-3 tracking-wide">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-          <span>高校化学・有機構造スピード判定バトル</span>
-        </div>
-        
-        <h2 class="text-3xl sm:text-5xl font-black font-chakra tracking-tight text-white flex items-center justify-center gap-2">
-          <span>CHEMI</span>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">BATTLE</span>
-        </h2>
-        <p class="text-slate-400 text-xs sm:text-sm mt-2 max-w-lg mx-auto leading-relaxed">
-          瞬時に官能基と骨格を見抜き、コンボを繋いでハイスコアを叩き出せ！
-        </p>
-      </div>
-
-      <!-- Step 1: Field Selection Section -->
-      <div class="w-full bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 sm:p-5 backdrop-blur-sm shadow-xl space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 font-chakra font-bold text-xs flex items-center justify-center border border-cyan-500/40">1</span>
-            <h3 class="text-sm font-bold text-slate-100">出題分野を選択</h3>
-          </div>
-          <span id="selected-category-count" class="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/80 px-2.5 py-0.5 rounded-full">
-            対象: 36化合物
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="category-selector-container">
-          <!-- All -->
-          <button onclick="selectCategory('all')" data-cat="all" class="category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-cyan-950/50 border-cyan-400 text-white shadow-lg shadow-cyan-500/10">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-              </span>
-              <span class="indicator-icon w-4 h-4 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center text-[10px] font-bold">✓</span>
-            </div>
-            <div class="font-bold text-xs">全分野</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">36種ミックス</div>
-          </button>
-
-          <!-- Aliphatic -->
-          <button onclick="selectCategory('aliphatic')" data-cat="aliphatic" class="category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-emerald-500/50 hover:bg-slate-800">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20">
-                <i data-lucide="git-commit" class="w-4 h-4"></i>
-              </span>
-              <span class="indicator-icon hidden w-4 h-4 rounded-full bg-emerald-400 text-slate-950 items-center justify-center text-[10px] font-bold">✓</span>
-            </div>
-            <div class="font-bold text-xs text-white">脂肪族</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">アルケン/アルコール</div>
-          </button>
-
-          <!-- Aromatic -->
-          <button onclick="selectCategory('aromatic')" data-cat="aromatic" class="category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-indigo-500/50 hover:bg-slate-800">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20">
-                <i data-lucide="hexagon" class="w-4 h-4"></i>
-              </span>
-              <span class="indicator-icon hidden w-4 h-4 rounded-full bg-indigo-400 text-slate-950 items-center justify-center text-[10px] font-bold">✓</span>
-            </div>
-            <div class="font-bold text-xs text-white">芳香族</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">ベンゼン/フェノール</div>
-          </button>
-
-          <!-- Oxygen -->
-          <button onclick="selectCategory('oxygen')" data-cat="oxygen" class="category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-rose-500/50 hover:bg-slate-800">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 group-hover:bg-rose-500/20">
-                <i data-lucide="flame" class="w-4 h-4"></i>
-              </span>
-              <span class="indicator-icon hidden w-4 h-4 rounded-full bg-rose-400 text-slate-950 items-center justify-center text-[10px] font-bold">✓</span>
-            </div>
-            <div class="font-bold text-xs text-white">酸素含有</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">エステル/ケトン</div>
-          </button>
-
-          <!-- Nitrogen -->
-          <button onclick="selectCategory('nitrogen')" data-cat="nitrogen" class="category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-blue-500/50 hover:bg-slate-800 col-span-2 sm:col-span-1">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20">
-                <i data-lucide="shield" class="w-4 h-4"></i>
-              </span>
-              <span class="indicator-icon hidden w-4 h-4 rounded-full bg-blue-400 text-slate-950 items-center justify-center text-[10px] font-bold">✓</span>
-            </div>
-            <div class="font-bold text-xs text-white">窒素含有</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">アニリン/ニトロ</div>
-          </button>
-        </div>
-
-        <!-- Field Info Strip -->
-        <div id="field-preview-bar" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <div class="flex items-center gap-2">
-            <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i>
-            <span id="field-preview-text">全36化合物の構造式からランダム出題。総合演習に最適です。</span>
-          </div>
-          <button onclick="openCodexModal()" class="text-cyan-400 hover:underline flex items-center gap-1 font-semibold text-[11px] shrink-0">
-            <span>図鑑で確認</span>
-            <i data-lucide="chevron-right" class="w-3 h-3"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 2: Game Mode Launcher -->
-      <div class="w-full space-y-3">
-        <div class="flex items-center gap-2 px-1">
-          <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 font-chakra font-bold text-xs flex items-center justify-center border border-emerald-500/40">2</span>
-          <h3 class="text-sm font-bold text-slate-100">モードを選んでスタート</h3>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Standard Mode Card -->
-          <div onclick="startGame('normal')" class="group relative p-5 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 hover:border-cyan-400/80 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/10 flex flex-col justify-between overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-cyan-500/15 transition-all"></div>
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-chakra px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-700/60 font-bold">10 QUESTIONS</span>
-                <span class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
-                  <i data-lucide="zap" class="w-5 h-5"></i>
-                </span>
-              </div>
-              <h4 class="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">スピードアタック</h4>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                1問15秒。正解速度ボーナスとコンボフィーバーでハイスコアを狙う王道テスト。
-              </p>
-            </div>
-            
-            <div class="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span class="text-slate-500 font-mono">TIME: 15s / Q</span>
-              <span class="font-bold text-cyan-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                START BATTLE <i data-lucide="arrow-right" class="w-4 h-4"></i>
-              </span>
-            </div>
-          </div>
-
-          <!-- Survival Mode Card -->
-          <div onclick="startGame('survival')" class="group relative p-5 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 hover:border-rose-500/80 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-500/10 flex flex-col justify-between overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/15 transition-all"></div>
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-chakra px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700/60 font-bold">ENDLESS HP</span>
-                <span class="p-2 rounded-xl bg-rose-500/10 text-rose-400 group-hover:scale-110 transition-transform">
-                  <i data-lucide="heart" class="w-5 h-5"></i>
-                </span>
-              </div>
-              <h4 class="text-lg font-bold text-white group-hover:text-rose-300 transition-colors">サバイバルバトル</h4>
-              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                ライフは3機。間違えるまで問題が出現し続ける限界突破のエンドレスモード。
-              </p>
-            </div>
-
-            <div class="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span class="text-slate-500 font-mono">LIVES: ❤️❤️❤️</span>
-              <span class="font-bold text-rose-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                START SURVIVAL <i data-lucide="arrow-right" class="w-4 h-4"></i>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-300">
+        有機構造式クエスト
+      </h1>
+      <p class="text-[11px] text-slate-400">高校化学教科書・共通テスト完全準拠</p>
     </div>
 
-    <!-- Screen 2: Game Screen -->
-    <div id="game-screen" class="w-full max-w-3xl hidden flex-col items-center">
-      
-      <!-- Top HUD status bar -->
-      <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
-        <!-- Question count / Lives -->
-        <div class="flex items-center gap-3">
-          <div id="hud-question-label" class="text-xs font-chakra px-3 py-1 bg-slate-800 text-slate-200 rounded-lg border border-slate-700">
-            Q. 1/10
-          </div>
-          <div id="hud-field-badge" class="text-xs font-mono px-2.5 py-1 bg-cyan-950/80 text-cyan-300 rounded-lg border border-cyan-800 hidden sm:block">
-            全分野
-          </div>
-          <div id="hud-lives-container" class="flex items-center gap-1 text-rose-500 text-sm">
-            <!-- Hearts rendered dynamically -->
-          </div>
-        </div>
-
-        <!-- Combo & Fever Indicator -->
-        <div class="flex items-center gap-2">
-          <div id="combo-container" class="hidden items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-chakra text-xs font-bold animate-pulse">
-            <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
-            <span id="combo-text">COMBO x2</span>
-          </div>
-          <div id="fever-badge" class="hidden px-2 py-0.5 rounded bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 font-black text-xs font-chakra animate-bounce">
-            FEVER (x2)
-          </div>
-        </div>
-
-        <!-- Score & Timer -->
-        <div class="flex items-center gap-4 font-chakra">
-          <div class="text-right">
-            <span class="text-[10px] text-slate-400 block -mb-1">SCORE</span>
-            <span id="hud-score" class="text-lg font-bold text-cyan-400">0</span>
-          </div>
-          <div class="relative w-11 h-11 flex items-center justify-center">
-            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path id="timer-circle" class="text-cyan-400 transition-all duration-100 ease-linear" stroke-dasharray="100, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            </svg>
-            <span id="timer-text" class="absolute text-xs font-bold font-chakra text-white">15</span>
-          </div>
-        </div>
+    <!-- 分野セレクト（2×2グリッド） -->
+    <div class="my-auto py-1 w-full">
+      <div class="text-[11px] font-bold text-cyan-400 text-left mb-1.5 flex items-center gap-1 px-1">
+        <span>▼ 出題分野を選択</span>
       </div>
-
-      <!-- Central Question Arena -->
-      <div id="question-card" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden transition-all duration-200">
-        
-        <!-- Mode prompt / Question Header -->
-        <div class="flex items-center justify-between mb-4">
-          <span id="question-type-tag" class="text-xs px-2.5 py-1 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-800 font-medium">
-            構造から名称を判定
-          </span>
-          <span id="question-category-tag" class="text-xs text-slate-400 font-chakra">
-            芳香族化合物
-          </span>
-        </div>
-
-        <h3 id="question-prompt" class="text-sm sm:text-base md:text-lg font-bold text-slate-100 text-center mb-4 leading-relaxed whitespace-pre-line px-2">
-          次の構造式を持つ化合物の名称は？
-        </h3>
-
-        <!-- Prompt Visual / Structure Stage (Used when question provides single structure) -->
-        <div id="main-structure-container" class="w-full h-48 sm:h-56 bg-slate-950/70 border border-slate-800 rounded-xl flex items-center justify-center p-4 relative mb-6 shadow-inner">
-          <div id="main-svg-wrapper" class="w-full h-full flex items-center justify-center">
-            <!-- SVG inserted dynamically -->
+      <div class="grid grid-cols-2 gap-1.5 w-full">
+        <button data-cat="all" class="cat-btn active-cat p-2.5 rounded-xl border text-left flex flex-col justify-center bg-cyan-950/60 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs font-bold text-white">⚡ 全分野ミックス</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500 text-slate-900 font-bold">36種</span>
           </div>
-          <div id="structure-hint" class="absolute bottom-2 right-3 text-[11px] text-slate-500 font-mono">
-            C7H6O3
+          <span class="text-[10px] text-slate-300 mt-1 leading-tight">総合実戦トレーニング</span>
+        </button>
+
+        <button data-cat="aliphatic" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs font-bold text-white">🧪 脂肪族化合物</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">12種</span>
           </div>
-        </div>
+          <span class="text-[10px] text-slate-400 mt-1 leading-tight">アルケン・アルキン・アルコール</span>
+        </button>
 
-        <!-- Options Container (4 options: either text buttons or SVG structure grid buttons) -->
-        <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- Dynamically populated buttons -->
-        </div>
-
-        <!-- Feedback Overlay banner (instant reward / explanation) -->
-        <div id="feedback-banner" class="hidden mt-4 p-4 rounded-xl border text-sm transition-all duration-300">
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-2">
-              <span id="feedback-icon" class="w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold">✓</span>
-              <span id="feedback-title" class="font-bold text-base">正解！ +120 pts</span>
-            </div>
-            <button id="next-btn" onclick="nextQuestion()" class="px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-lg shadow-cyan-500/20 transition-all">
-              <span>次へ</span>
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </button>
+        <button data-cat="aromatic" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs font-bold text-white">⌬ 芳香族化合物</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">15種</span>
           </div>
-          <p id="feedback-desc" class="mt-2 text-xs text-slate-300 leading-relaxed border-t border-slate-700/50 pt-2"></p>
-        </div>
-      </div>
+          <span class="text-[10px] text-slate-400 mt-1 leading-tight">ベンゼン環・フェノール類</span>
+        </button>
 
-      <!-- Quick Quit button -->
-      <div class="mt-4 text-center">
-        <button onclick="confirmQuit()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-          ゲームを中断してタイトルへ戻る
+        <button data-cat="oxygen" class="cat-btn p-2.5 rounded-xl border text-left flex flex-col justify-center bg-slate-900/60 border-slate-700 text-slate-300">
+          <div class="flex justify-between items-center w-full">
+            <span class="text-xs font-bold text-white">❄️ 酸素・窒素含有</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">9種</span>
+          </div>
+          <span class="text-[10px] text-slate-400 mt-1 leading-tight">カルボン酸・エステル・アミン</span>
         </button>
       </div>
     </div>
 
-    <div id="result-screen" class="w-full max-w-xl hidden flex-col items-center text-center py-6">
-      <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <div id="result-badge-icon" class="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-2xl font-bold">
-          🏆
-        </div>
-
-        <div>
-          <span id="result-rank-title" class="text-xs font-chakra px-3 py-1 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 tracking-wider">
-            GRADE: A
-          </span>
-          <h2 id="result-heading" class="text-2xl sm:text-3xl font-black mt-2 text-white">実験完了！</h2>
-          <p id="result-subheading" class="text-xs sm:text-sm text-slate-400 mt-1">有機化学の構造式を的確に識別しました。</p>
-        </div>
-
-        <!-- Score Breakdown Stats -->
-        <div class="grid grid-cols-3 gap-2 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 font-chakra">
-          <div>
-            <span class="text-[10px] text-slate-400 block">TOTAL SCORE</span>
-            <span id="result-final-score" class="text-xl sm:text-2xl font-black text-cyan-400">0</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-400 block">ACCURACY</span>
-            <span id="result-accuracy" class="text-xl sm:text-2xl font-black text-emerald-400">0%</span>
-          </div>
-          <div>
-            <span class="text-[10px] text-slate-400 block">MAX COMBO</span>
-            <span id="result-max-combo" class="text-xl sm:text-2xl font-black text-amber-400">0</span>
-          </div>
-        </div>
-
-        <!-- Result Chemical Title evaluation -->
-        <div class="p-3 bg-slate-800/40 rounded-xl border border-slate-700/40 text-left text-xs space-y-1">
-          <div class="text-slate-400 font-semibold">🧪 研究員称号:</div>
-          <div id="result-title-evaluation" class="text-white font-bold text-sm">
-            敏腕プロフェッサー級ケミスト
-          </div>
-          <div id="result-review-text" class="text-slate-400 text-[11px] leading-relaxed">
-            サリチル酸誘導体やカルボニル化合物の識別が非常に俊敏です。
-          </div>
-        </div>
-
-        <!-- Action buttons -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button onclick="restartGame()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:from-cyan-400 hover:to-emerald-300 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
-            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-            <span>もう一度挑戦</span>
-          </button>
-          <button onclick="openCodexModal()" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition-all flex items-center justify-center gap-2">
-            <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i>
-            <span>図鑑で復習</span>
-          </button>
-          <button onclick="showScreen('title-screen')" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-sm transition-all">
-            タイトルへ
-          </button>
-        </div>
+    <!-- モード選択 & スタート -->
+    <div class="space-y-1.5 shrink-0 w-full">
+      <div class="grid grid-cols-2 gap-2">
+        <button id="startSpeedBtn" class="btn-cyber p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold text-white shadow-lg shadow-cyan-500/30 flex flex-col items-center">
+          <span class="text-xs tracking-wider">SPEED ATTACK</span>
+          <span class="text-[11px] font-normal opacity-90">10問タイム勝負</span>
+        </button>
+        <button id="startSurvivalBtn" class="btn-cyber p-2.5 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 font-bold text-white shadow-lg shadow-pink-500/30 flex flex-col items-center">
+          <span class="text-xs tracking-wider">SURVIVAL</span>
+          <span class="text-[11px] font-normal opacity-90">HP制エンドレス</span>
+        </button>
+      </div>
+      <div class="text-[10px] text-slate-400 font-mono">
+        HIGH SCORE: <span id="titleHighScore" class="text-cyan-300 font-bold">0</span> | BEST COMBO: <span id="titleBestCombo" class="text-amber-300 font-bold">0</span>
       </div>
     </div>
-
   </main>
 
-  <div id="codex-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-      
-      <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
-        <div class="flex items-center gap-2.5">
-          <div class="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-            <i data-lucide="book-marked" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-white">有機化学 分子構造図鑑</h3>
-            <p class="text-xs text-slate-400">ゲームで出題される重要化合物の構造・性質・反応一覧</p>
-          </div>
-        </div>
-        <button onclick="closeCodexModal()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+  <!-- ================= VIEW 2: バトル画面 (1画面完全固定・スクロールなし) ================= -->
+  <main id="battleView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-2 sm:p-3 relative">
+    
+    <!-- HUD -->
+    <div class="flex items-center justify-between text-xs font-mono shrink-0 px-1">
+      <div class="flex items-center gap-1.5">
+        <span id="questionTypeBadge" class="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 text-[10px] font-bold">
+          構造 ➔ 名称
+        </span>
+        <span id="feverBadge" class="hidden px-1.5 py-0.5 rounded bg-pink-600 font-black text-[10px] text-white animate-bounce">
+          🔥 FEVER x2
+        </span>
       </div>
-
-      <!-- Modal Filter / Search bar -->
-      <div class="px-5 py-3 bg-slate-950/60 border-b border-slate-800/80 flex flex-wrap gap-2 items-center justify-between">
-        <div class="flex gap-1.5 overflow-x-auto text-xs font-medium pb-1 sm:pb-0" id="codex-filters">
-          <button onclick="filterCodex('all')" class="px-3 py-1 rounded-full bg-cyan-500 text-slate-950 font-bold codex-filter-btn" data-cat="all">全て</button>
-          <button onclick="filterCodex('aliphatic')" class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 codex-filter-btn" data-cat="aliphatic">脂肪族</button>
-          <button onclick="filterCodex('aromatic')" class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 codex-filter-btn" data-cat="aromatic">芳香族</button>
-          <button onclick="filterCodex('oxygen')" class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 codex-filter-btn" data-cat="oxygen">酸素含有</button>
-          <button onclick="filterCodex('nitrogen')" class="px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 codex-filter-btn" data-cat="nitrogen">窒素含有</button>
+      <div class="flex items-center gap-3">
+        <div id="hpContainer" class="flex gap-1"></div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400">SCORE</span>
+          <span id="scoreVal" class="text-sm font-bold text-cyan-300 ml-1">0</span>
         </div>
-        <div class="text-xs text-cyan-400 font-chakra" id="codex-unlocked-status">
-          アンロック状況: 0 / 24
-        </div>
-      </div>
-
-      <!-- Modal Body (Grid of Cards) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="codex-grid">
-        <!-- Injected via JavaScript -->
-      </div>
-      
-      <!-- Modal Footer -->
-      <div class="p-3 border-t border-slate-800 bg-slate-950/70 text-center text-xs text-slate-500">
-        ※ 正解した化合物には「✓ 解放済」バッジがつき、詳細な反応特性が確認できます。
       </div>
     </div>
-  </div>
 
-  <!-- Notification Toast message -->
-  <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 z-50">
-    <i data-lucide="info" class="w-4 h-4 text-cyan-400"></i>
-    <span id="toast-text">メッセージ</span>
-  </div>
+    <!-- タイマーバー -->
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden my-1 shrink-0">
+      <div id="timerBar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 w-full transition-all duration-100 ease-linear"></div>
+    </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/80 py-3 text-center text-xs text-slate-500 font-mono">
-    <span>ChemiMaster Lab &bull; Interactive Organic Chemistry Trainer</span>
-  </footer>
+    <!-- 問題表示領域（横幅フル活用で改行を自然に） -->
+    <div class="flex-1 flex flex-col items-center justify-center min-h-0 py-0.5 text-center w-full px-1">
+      <h2 id="questionPrompt" class="w-full text-xs sm:text-sm font-bold text-slate-100 mb-1 leading-snug break-words">
+        <!-- JSで挿入 -->
+      </h2>
+
+      <!-- 構造式問題のSVG枠（高さ最大追従） -->
+      <div id="questionSvgContainer" class="w-full max-w-[190px] h-24 sm:h-28 flex items-center justify-center bg-slate-900/90 rounded-xl border border-slate-700/80 p-1 shadow-inner relative">
+        <svg id="questionSvg" class="w-full h-full object-contain" viewBox="0 0 180 180"></svg>
+        <span id="questionFormula" class="absolute bottom-1 right-2 text-[9px] font-mono text-slate-400/80"></span>
+      </div>
+    </div>
+
+    <!-- 4択選択肢グリッド (2行×2列) -->
+    <div id="optionsGrid" class="grid grid-cols-2 gap-1.5 sm:gap-2 shrink-0 h-[48%] sm:h-[50%] w-full">
+      <!-- JSで4つのボタンを生成 -->
+    </div>
+
+    <!-- 即時解説モーダル -->
+    <div id="answerFeedbackModal" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center justify-between text-center">
+      <div id="feedbackIcon" class="text-3xl my-auto">⭕</div>
+      <div class="w-full px-1">
+        <h3 id="feedbackTitle" class="text-base font-black mb-1"></h3>
+        <p id="feedbackDesc" class="text-xs text-slate-300 leading-relaxed bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 max-h-28 overflow-y-auto text-left"></p>
+      </div>
+      <button id="feedbackNextBtn" class="w-full py-2.5 mt-2 rounded-xl bg-cyan-500 font-bold text-slate-950 text-sm active:scale-95 shadow-lg shadow-cyan-500/40">
+        次へ進む (NEXT) ➔
+      </button>
+    </div>
+  </main>
+
+  <!-- ================= VIEW 3: リザルト画面 ================= -->
+  <main id="resultView" class="hidden flex-1 flex flex-col justify-between overflow-hidden cyber-panel rounded-2xl p-4 text-center">
+    <div class="shrink-0">
+      <span class="text-xs font-mono text-cyan-400">OPERATION COMPLETED</span>
+      <h2 class="text-2xl font-black text-white mt-1">バトル終了！</h2>
+    </div>
+
+    <div class="my-auto space-y-2 py-2">
+      <div class="text-4xl font-teko font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-pink-400" id="resultScore">
+        0 PTS
+      </div>
+      <div class="text-xs font-bold text-slate-300" id="resultTitleGrade">称号: 研修研究員</div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs font-mono max-w-xs mx-auto pt-2">
+        <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+          <div class="text-[10px] text-slate-400">正解率</div>
+          <div id="resultAccuracy" class="text-sm font-bold text-cyan-300">0%</div>
+        </div>
+        <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+          <div class="text-[10px] text-slate-400">最大コンボ</div>
+          <div id="resultCombo" class="text-sm font-bold text-pink-400">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-1.5 shrink-0 w-full">
+      <button id="resultRetryBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white text-sm active:scale-95 shadow-md shadow-cyan-500/30">
+        🔄 もう一度挑戦する
+      </button>
+      <button id="resultHomeBtn" class="w-full py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs active:scale-95">
+        🏠 タイトルへ戻る
+      </button>
+    </div>
+  </main>
+
+  <!-- ================= VIEW 4: 分子図鑑（Dex）モーダル ================= -->
+  <div id="dexModal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md p-3 flex flex-col justify-between">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
+      <h3 class="text-base font-bold text-cyan-300 flex items-center gap-1.5">
+        <span>📖</span> 分子図鑑 (CHEMICAL CODEX)
+      </h3>
+      <button id="dexCloseBtn" class="text-slate-400 hover:text-white px-2 py-1 text-sm font-bold">✕ 閉じる</button>
+    </div>
+
+    <div class="flex gap-1 py-1.5 overflow-x-auto text-[11px] shrink-0 font-bold" id="dexTabs">
+      <button data-filter="all" class="dex-tab active-dex px-2.5 py-1 rounded bg-cyan-500 text-slate-900 shrink-0">すべて (36)</button>
+      <button data-filter="aliphatic" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">脂肪族</button>
+      <button data-filter="aromatic" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">芳香族</button>
+      <button data-filter="oxygen" class="dex-tab px-2.5 py-1 rounded bg-slate-800 text-slate-300 shrink-0">酸素・窒素</button>
+    </div>
+
+    <div id="dexList" class="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1 my-1"></div>
+  </div>
 
   <script>
-    /**
-     * Organic Compound Database with custom procedural SVG illustrations
-     * High school standard structural formulas & Kekulé aromatic rings (高校化学準拠・ケクレ構造式)
-     */
+    /* ==========================================================
+       1. 高校化学36化合物 完全データベース（高校教科書ケクレ表記）
+       ========================================================== */
     const COMPOUNDS = [
+      // 脂肪族 (12)
+      { id: 'methane', name: 'メタン', formula: 'CH4', cat: 'aliphatic', desc: '最も単純なアルカン。正四面体構造。天然ガスの主成分。置換反応を起こしやすい。',
+        svg: `<text x="90" y="90" class="chem-text">C</text>
+              <line x1="90" y1="78" x2="90" y2="48" class="chem-bond"/><text x="90" y="38" class="chem-text">H</text>
+              <line x1="90" y1="102" x2="90" y2="132" class="chem-bond"/><text x="90" y="142" class="chem-text">H</text>
+              <line x1="78" y1="90" x2="48" y2="90" class="chem-bond"/><text x="38" y="90" class="chem-text">H</text>
+              <line x1="102" y1="90" x2="132" y2="90" class="chem-bond"/><text x="142" y="90" class="chem-text">H</text>` },
+      { id: 'ethene', name: 'エチレン (エテン)', formula: 'C2H4', cat: 'aliphatic', desc: '二重結合をもつ最も単純なアルケン。臭素水を脱色する。付加重合でポリエチレン。',
+        svg: `<text x="70" y="90" class="chem-text">C</text><text x="110" y="90" class="chem-text">C</text>
+              <line x1="80" y1="86" x2="100" y2="86" class="chem-bond-double"/><line x1="80" y1="94" x2="100" y2="94" class="chem-bond-double"/>
+              <line x1="60" y1="80" x2="42" y2="62" class="chem-bond"/><text x="34" y="54" class="chem-text">H</text>
+              <line x1="60" y1="100" x2="42" y2="118" class="chem-bond"/><text x="34" y="126" class="chem-text">H</text>
+              <line x1="120" y1="80" x2="138" y2="62" class="chem-bond"/><text x="146" y="54" class="chem-text">H</text>
+              <line x1="120" y1="100" x2="138" y2="118" class="chem-bond"/><text x="146" y="126" class="chem-text">H</text>` },
+      { id: 'ethyne', name: 'アセチレン (エチン)', formula: 'C2H2', cat: 'aliphatic', desc: '三重結合をもつ直線状分子。炭化カルシウム（カーバイド）に水を加えて発生。銀アセチリド沈殿を生じる。',
+        svg: `<text x="40" y="90" class="chem-text">H</text><line x1="50" y1="90" x2="70" y2="90" class="chem-bond"/>
+              <text x="80" y="90" class="chem-text">C</text>
+              <line x1="90" y1="84" x2="110" y2="84" class="chem-bond"/><line x1="90" y1="90" x2="110" y2="90" class="chem-bond"/><line x1="90" y1="96" x2="110" y2="96" class="chem-bond"/>
+              <text x="120" y="90" class="chem-text">C</text><line x1="130" y1="90" x2="150" y2="90" class="chem-bond"/><text x="160" y="90" class="chem-text">H</text>` },
+      { id: 'propene', name: 'プロペン', formula: 'C3H6', cat: 'aliphatic', desc: '水を付加させるとマルコフニコフ則に従い主生成物として2-プロパノールが得られる。',
+        svg: `<text x="45" y="90" class="chem-text">H3C</text><line x1="65" y1="90" x2="85" y2="90" class="chem-bond"/>
+              <text x="95" y="90" class="chem-text">CH</text>
+              <line x1="107" y1="86" x2="125" y2="86" class="chem-bond"/><line x1="107" y1="94" x2="125" y2="94" class="chem-bond"/>
+              <text x="142" y="90" class="chem-text">CH2</text>` },
+      { id: 'methanol', name: 'メタノール', formula: 'CH4O', cat: 'aliphatic', desc: '有毒（失明の危険）。一酸化炭素と水素から工業的に合成される第1級アルコール。',
+        svg: `<text x="50" y="90" class="chem-text">H3C</text><line x1="75" y1="90" x2="115" y2="90" class="chem-bond"/><text x="135" y="90" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'ethanol', name: 'エタノール', formula: 'C2H6O', cat: 'aliphatic', desc: 'ヨードホルム反応陽性。ナトリウムと反応して水素発生。酒類の主成分。',
+        svg: `<text x="40" y="90" class="chem-text">H3C</text><line x1="62" y1="90" x2="90" y2="90" class="chem-bond"/>
+              <text x="105" y="90" class="chem-text">CH2</text><line x1="120" y1="90" x2="140" y2="90" class="chem-bond"/>
+              <text x="155" y="90" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'isopropanol', name: '2-プロパノール', formula: 'C3H8O', cat: 'aliphatic', desc: '第2級アルコール。酸化するとアセトンになる。ヨードホルム反応陽性。消毒液に多用される。',
+        svg: `<text x="90" y="90" class="chem-text">CH</text>
+              <line x1="90" y1="78" x2="90" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text" fill="#f87171">OH</text>
+              <line x1="75" y1="95" x2="48" y2="108" class="chem-bond"/><text x="35" y="115" class="chem-text">H3C</text>
+              <line x1="105" y1="95" x2="132" y2="108" class="chem-bond"/><text x="145" y="115" class="chem-text">CH3</text>` },
+      { id: 'secbutanol', name: '2-ブタノール', formula: 'C4H10O', cat: 'aliphatic', desc: '不斉炭素原子をもち鏡像異性体が存在。酸化するとメチルエチルケトン。ヨードホルム反応陽性。',
+        svg: `<text x="85" y="90" class="chem-text">CH</text>
+              <line x1="85" y1="78" x2="85" y2="52" class="chem-bond"/><text x="85" y="42" class="chem-text" fill="#f87171">OH</text>
+              <line x1="70" y1="90" x2="48" y2="90" class="chem-bond"/><text x="35" y="90" class="chem-text">H3C</text>
+              <line x1="102" y1="90" x2="125" y2="90" class="chem-bond"/><text x="146" y="90" class="chem-text">C2H5</text>` },
+      { id: 'ethylene_glycol', name: 'エチレングリコール', formula: 'C2H6O2', cat: 'aliphatic', desc: '2価アルコール。自動車の不凍液やPETボトルの原料（ポリエチレンテレフタラート合成原料）。',
+        svg: `<text x="65" y="90" class="chem-text">CH2</text><line x1="85" y1="90" x2="105" y2="90" class="chem-bond"/><text x="125" y="90" class="chem-text">CH2</text>
+              <line x1="65" y1="102" x2="65" y2="125" class="chem-bond"/><text x="65" y="136" class="chem-text" fill="#f87171">OH</text>
+              <line x1="125" y1="102" x2="125" y2="125" class="chem-bond"/><text x="125" y="136" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'glycerol', name: 'グリセリン', formula: 'C3H8O3', cat: 'aliphatic', desc: '3価アルコール。油脂を加水分解すると高級脂肪酸とともに得られる。ニトログリセリンの原料。',
+        svg: `<text x="50" y="90" class="chem-text">CH2</text><line x1="68" y1="90" x2="80" y2="90" class="chem-bond"/>
+              <text x="92" y="90" class="chem-text">CH</text><line x1="104" y1="90" x2="116" y2="90" class="chem-bond"/>
+              <text x="134" y="90" class="chem-text">CH2</text>
+              <line x1="50" y1="102" x2="50" y2="122" class="chem-bond"/><text x="50" y="132" class="chem-text" fill="#f87171">OH</text>
+              <line x1="92" y1="102" x2="92" y2="122" class="chem-bond"/><text x="92" y="132" class="chem-text" fill="#f87171">OH</text>
+              <line x1="134" y1="102" x2="134" y2="122" class="chem-bond"/><text x="134" y="132" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'maleic_acid', name: 'マレイン酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'シス型幾何異性体。加熱すると分子内で容易に脱水し、無水マレイン酸になる。',
+        svg: `<text x="75" y="105" class="chem-text">C</text><text x="105" y="105" class="chem-text">C</text>
+              <line x1="84" y1="101" x2="96" y2="101" class="chem-bond"/><line x1="84" y1="109" x2="96" y2="109" class="chem-bond"/>
+              <line x1="72" y1="92" x2="56" y2="68" class="chem-bond"/><text x="45" y="55" class="chem-text" fill="#f87171">HOOC</text>
+              <line x1="108" y1="92" x2="124" y2="68" class="chem-bond"/><text x="138" y="55" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="75" y1="115" x2="65" y2="135" class="chem-bond"/><text x="60" y="145" class="chem-text">H</text>
+              <line x1="105" y1="115" x2="115" y2="135" class="chem-bond"/><text x="120" y="145" class="chem-text">H</text>` },
+      { id: 'fumaric_acid', name: 'フマル酸', formula: 'C4H4O4', cat: 'aliphatic', desc: 'トランス型幾何異性体。マレイン酸と異なり分子内脱水せず、融点が高い。',
+        svg: `<text x="75" y="90" class="chem-text">C</text><text x="105" y="90" class="chem-text">C</text>
+              <line x1="84" y1="86" x2="96" y2="86" class="chem-bond"/><line x1="84" y1="94" x2="96" y2="94" class="chem-bond"/>
+              <line x1="72" y1="78" x2="56" y2="55" class="chem-bond"/><text x="45" y="45" class="chem-text" fill="#f87171">HOOC</text>
+              <line x1="108" y1="102" x2="124" y2="125" class="chem-bond"/><text x="138" y="135" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="75" y1="102" x2="65" y2="125" class="chem-bond"/><text x="60" y="135" class="chem-text">H</text>
+              <line x1="105" y1="78" x2="115" y2="55" class="chem-bond"/><text x="120" y="45" class="chem-text">H</text>` },
+
+      // 芳香族 (15)
+      { id: 'benzene', name: 'ベンゼン', formula: 'C6H6', cat: 'aromatic', desc: '正六角形平面分子。ケクレ構造の交互二重結合。置換反応を起こしやすい。',
+        svg: `<polygon points="90,40 125,60 125,100 90,120 55,100 55,60" fill="none" class="chem-bond"/>
+              <line x1="90" y1="48" x2="118" y2="64" class="chem-bond"/><line x1="118" y1="96" x2="90" y2="112" class="chem-bond"/><line x1="62" y1="96" x2="62" y2="64" class="chem-bond"/>` },
+      { id: 'toluene', name: 'トルエン', formula: 'C7H8', cat: 'aromatic', desc: 'メチルベンゼン。過マンガン酸カリウム等で酸化すると安息香酸になる。',
+        svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
+              <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
+              <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text">CH3</text>` },
+      { id: 'o_xylene', name: 'o-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,2-ジメチルベンゼン。酸化するとフタル酸（オルトジカルボン酸）になる。',
+        svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
+              <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
+              <line x1="85" y1="60" x2="85" y2="38" class="chem-bond"/><text x="85" y="28" class="chem-text">CH3</text>
+              <line x1="120" y1="80" x2="140" y2="68" class="chem-bond"/><text x="155" y="62" class="chem-text">CH3</text>` },
+      { id: 'p_xylene', name: 'p-キシレン', formula: 'C8H10', cat: 'aromatic', desc: '1,4-ジメチルベンゼン。酸化するとテレフタル酸（ポリエステル原料）が得られる。',
+        svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
+              <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
+              <line x1="90" y1="55" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text">CH3</text>
+              <line x1="90" y1="135" x2="90" y2="154" class="chem-bond"/><text x="90" y="164" class="chem-text">CH3</text>` },
+      { id: 'styrene', name: 'スチレン', formula: 'C8H8', cat: 'aromatic', desc: 'ビニルベンゼン。側鎖二重結合が臭素水を脱色する。付加重合でポリスチレン。',
+        svg: `<polygon points="80,70 115,90 115,130 80,150 45,130 45,90" fill="none" class="chem-bond"/>
+              <line x1="80" y1="78" x2="108" y2="94" class="chem-bond"/><line x1="108" y1="126" x2="80" y2="142" class="chem-bond"/><line x1="52" y1="126" x2="52" y2="94" class="chem-bond"/>
+              <line x1="80" y1="70" x2="80" y2="48" class="chem-bond"/><text x="85" y="38" class="chem-text">CH</text>
+              <line x1="98" y1="34" x2="120" y2="34" class="chem-bond"/><line x1="98" y1="40" x2="120" y2="40" class="chem-bond"/><text x="140" y="38" class="chem-text">CH2</text>` },
+      { id: 'cumene', name: 'クメン', formula: 'C9H12', cat: 'aromatic', desc: 'イソプロピルベンゼン。空気酸化後に希硫酸で分解しフェノールとアセトンを併産（クメン法）。',
+        svg: `<polygon points="90,75 125,95 125,135 90,155 55,135 55,95" fill="none" class="chem-bond"/>
+              <line x1="90" y1="83" x2="118" y2="99" class="chem-bond"/><line x1="118" y1="131" x2="90" y2="147" class="chem-bond"/><line x1="62" y1="131" x2="62" y2="99" class="chem-bond"/>
+              <line x1="90" y1="75" x2="90" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text">CH</text>
+              <line x1="80" y1="36" x2="62" y2="24" class="chem-bond"/><text x="48" y="18" class="chem-text">H3C</text>
+              <line x1="100" y1="36" x2="118" y2="24" class="chem-bond"/><text x="132" y="18" class="chem-text">CH3</text>` },
+      { id: 'phenol', name: 'フェノール', formula: 'C6H6O', cat: 'aromatic', desc: '弱酸性（炭酸より弱い）。塩化鉄(III)で紫色呈色。臭素水で白沈（2,4,6-トリブロモフェノール）。',
+        svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
+              <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
+              <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'picric_acid', name: 'ピクリン酸', formula: 'C6H3N3O7', cat: 'aromatic', desc: '2,4,6-トリニトロフェノール。3つのニトロ基の電子求引性で強酸性を示す黄色結晶。',
+        svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
+              <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
+              <line x1="90" y1="55" x2="90" y2="36" class="chem-bond"/><text x="90" y="25" class="chem-text" fill="#f87171">OH</text>
+              <line x1="55" y1="75" x2="35" y2="65" class="chem-bond"/><text x="24" y="60" class="chem-text" fill="#38bdf8">O2N</text>
+              <line x1="125" y1="75" x2="145" y2="65" class="chem-bond"/><text x="156" y="60" class="chem-text" fill="#38bdf8">NO2</text>
+              <line x1="90" y1="135" x2="90" y2="155" class="chem-bond"/><text x="90" y="165" class="chem-text" fill="#38bdf8">NO2</text>` },
+      { id: 'benzoic_acid', name: '安息香酸', formula: 'C7H6O2', cat: 'aromatic', desc: 'カルボキシ基をもつ芳香族カルボン酸。炭酸水素ナトリウムと反応してCO2気泡を発生する。',
+        svg: `<polygon points="90,58 125,78 125,118 90,138 55,118 55,78" fill="none" class="chem-bond"/>
+              <line x1="90" y1="66" x2="118" y2="82" class="chem-bond"/><line x1="118" y1="114" x2="90" y2="130" class="chem-bond"/><line x1="62" y1="114" x2="62" y2="82" class="chem-bond"/>
+              <line x1="90" y1="58" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#f87171">COOH</text>` },
+      { id: 'salicylic_acid', name: 'サリチル酸', formula: 'C7H6O3', cat: 'aromatic', desc: 'フェノール性OHとCOOHをオルト位にもつ。塩化鉄(III)で赤紫色呈色、NaHCO3で気泡発生。',
+        svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
+              <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
+              <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="120" y1="80" x2="140" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'acetylsalicylic_acid', name: 'アセチルサリチル酸', formula: 'C9H8O4', cat: 'aromatic', desc: 'アスピリン（解熱鎮痛剤）。OH基がアセチル化されており、塩化鉄(III)で呈色しない。',
+        svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
+              <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
+              <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="120" y1="80" x2="138" y2="70" class="chem-bond"/><text x="160" y="66" class="chem-text" fill="#f87171">OCOCH3</text>` },
+      { id: 'methyl_salicylate', name: 'サリチル酸メチル', formula: 'C8H8O3', cat: 'aromatic', desc: '消炎鎮痛塗布剤。特有の芳香。フェノール性OHが残っているため塩化鉄(III)で赤紫色呈色。',
+        svg: `<polygon points="85,60 120,80 120,120 85,140 50,120 50,80" fill="none" class="chem-bond"/>
+              <line x1="85" y1="68" x2="113" y2="84" class="chem-bond"/><line x1="113" y1="116" x2="85" y2="132" class="chem-bond"/><line x1="57" y1="116" x2="57" y2="84" class="chem-bond"/>
+              <line x1="85" y1="60" x2="85" y2="36" class="chem-bond"/><text x="85" y="26" class="chem-text" fill="#f87171">COOCH3</text>
+              <line x1="120" y1="80" x2="140" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'phthalic_acid', name: 'フタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'オルト位に2つのカルボキシ基をもつ。加熱により分子内脱水して無水フタル酸になる。',
+        svg: `<polygon points="80,62 115,82 115,122 80,142 45,122 45,82" fill="none" class="chem-bond"/>
+              <line x1="80" y1="70" x2="108" y2="86" class="chem-bond"/><line x1="108" y1="118" x2="80" y2="134" class="chem-bond"/><line x1="52" y1="118" x2="52" y2="86" class="chem-bond"/>
+              <line x1="80" y1="62" x2="80" y2="38" class="chem-bond"/><text x="80" y="28" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="115" y1="82" x2="135" y2="70" class="chem-bond"/><text x="155" y="66" class="chem-text" fill="#f87171">COOH</text>` },
+      { id: 'terephthalic_acid', name: 'テレフタル酸', formula: 'C8H6O4', cat: 'aromatic', desc: 'パラ位にカルボキシ基。エチレングリコールと縮合重合してポリエチレンテレフタラート（PET）を生成。',
+        svg: `<polygon points="90,56 125,76 125,116 90,136 55,116 55,76" fill="none" class="chem-bond"/>
+              <line x1="90" y1="64" x2="118" y2="80" class="chem-bond"/><line x1="118" y1="112" x2="90" y2="128" class="chem-bond"/><line x1="62" y1="112" x2="62" y2="80" class="chem-bond"/>
+              <line x1="90" y1="56" x2="90" y2="36" class="chem-bond"/><text x="90" y="26" class="chem-text" fill="#f87171">COOH</text>
+              <line x1="90" y1="136" x2="90" y2="154" class="chem-bond"/><text x="90" y="165" class="chem-text" fill="#f87171">COOH</text>` },
+      { id: 'aniline', name: 'アニリン', formula: 'C6H7N', cat: 'aromatic', desc: '芳香族第1級アミン。弱塩基性。さらし粉水溶液で赤紫色呈色。亜硝酸ナトリウムと塩酸でジアゾ化。',
+        svg: `<polygon points="90,55 125,75 125,115 90,135 55,115 55,75" fill="none" class="chem-bond"/>
+              <line x1="90" y1="63" x2="118" y2="79" class="chem-bond"/><line x1="118" y1="111" x2="90" y2="127" class="chem-bond"/><line x1="62" y1="111" x2="62" y2="79" class="chem-bond"/>
+              <line x1="90" y1="55" x2="90" y2="35" class="chem-bond"/><text x="90" y="24" class="chem-text" fill="#38bdf8">NH2</text>` },
+
+      // 酸素・窒素含有 (9)
+      { id: 'formaldehyde', name: 'ホルムアルデヒド', formula: 'CH2O', cat: 'oxygen', desc: '刺激臭の気体。水溶液はホルマリン。銀鏡反応・フェーリング反応を示し、フェノール樹脂の原料になる。',
+        svg: `<text x="90" y="90" class="chem-text">C</text>
+              <line x1="90" y1="78" x2="90" y2="52" class="chem-bond"/><line x1="94" y1="78" x2="94" y2="52" class="chem-bond"/><text x="92" y="42" class="chem-text" fill="#f87171">O</text>
+              <line x1="80" y1="100" x2="58" y2="120" class="chem-bond"/><text x="48" y="128" class="chem-text">H</text>
+              <line x1="100" y1="100" x2="122" y2="120" class="chem-bond"/><text x="132" y="128" class="chem-text">H</text>` },
+      { id: 'acetaldehyde', name: 'アセトアルデヒド', formula: 'C2H4O', cat: 'oxygen', desc: '銀鏡反応陽性。さらにCH3-CO-構造をもつためヨードホルム反応も陽性。エタノールの酸化で生成。',
+        svg: `<text x="50" y="100" class="chem-text">H3C</text><line x1="72" y1="100" x2="95" y2="100" class="chem-bond"/><text x="105" y="100" class="chem-text">C</text>
+              <line x1="103" y1="88" x2="103" y2="60" class="chem-bond"/><line x1="108" y1="88" x2="108" y2="60" class="chem-bond"/><text x="105" y="50" class="chem-text" fill="#f87171">O</text>
+              <line x1="117" y1="100" x2="140" y2="100" class="chem-bond"/><text x="150" y="100" class="chem-text">H</text>` },
+      { id: 'acetone', name: 'アセトン', formula: 'C3H6O', cat: 'oxygen', desc: '最も単純なケトン。還元性はないがヨードホルム反応は陽性。酢酸カルシウムの乾留やクメン法で生成。',
+        svg: `<text x="90" y="100" class="chem-text">C</text>
+              <line x1="88" y1="88" x2="88" y2="60" class="chem-bond"/><line x1="93" y1="88" x2="93" y2="60" class="chem-bond"/><text x="90" y="50" class="chem-text" fill="#f87171">O</text>
+              <line x1="78" y1="108" x2="52" y2="124" class="chem-bond"/><text x="40" y="132" class="chem-text">H3C</text>
+              <line x1="102" y1="108" x2="128" y2="124" class="chem-bond"/><text x="142" y="132" class="chem-text">CH3</text>` },
+      { id: 'formic_acid', name: 'ギ酸', formula: 'CH2O2', cat: 'oxygen', desc: 'カルボン酸でありながら-CHO（アルデヒド基）をもつため、還元性（銀鏡反応）を示す特異構造。',
+        svg: `<text x="90" y="90" class="chem-text">C</text>
+              <line x1="88" y1="78" x2="88" y2="52" class="chem-bond"/><line x1="93" y1="78" x2="93" y2="52" class="chem-bond"/><text x="90" y="42" class="chem-text" fill="#f87171">O</text>
+              <line x1="78" y1="90" x2="52" y2="90" class="chem-bond"/><text x="40" y="90" class="chem-text">H</text>
+              <line x1="102" y1="90" x2="126" y2="90" class="chem-bond"/><text x="142" y="90" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'acetic_acid', name: '酢酸', formula: 'C2H4O2', cat: 'oxygen', desc: '食酢の主成分。純粋なものは冬季に凝固するため氷酢酸と呼ばれる。弱酸。',
+        svg: `<text x="50" y="100" class="chem-text">H3C</text><line x1="72" y1="100" x2="98" y2="100" class="chem-bond"/><text x="110" y="100" class="chem-text">C</text>
+              <line x1="108" y1="88" x2="108" y2="60" class="chem-bond"/><line x1="113" y1="88" x2="113" y2="60" class="chem-bond"/><text x="110" y="50" class="chem-text" fill="#f87171">O</text>
+              <line x1="122" y1="100" x2="142" y2="100" class="chem-bond"/><text x="156" y="100" class="chem-text" fill="#f87171">OH</text>` },
+      { id: 'ethyl_acetate', name: '酢酸エチル', formula: 'C4H8O2', cat: 'oxygen', desc: '果実臭をもつエステル。水酸化ナトリウム水溶液で加熱するとけん化されて酢酸ナトリウムとエタノールになる。',
+        svg: `<text x="35" y="90" class="chem-text">CH3</text><line x1="55" y1="90" x2="72" y2="90" class="chem-bond"/>
+              <text x="82" y="90" class="chem-text">C</text><line x1="80" y1="78" x2="80" y2="55" class="chem-bond"/><line x1="85" y1="78" x2="85" y2="55" class="chem-bond"/><text x="82" y="45" class="chem-text" fill="#f87171">O</text>
+              <line x1="92" y1="90" x2="110" y2="90" class="chem-bond"/><text x="120" y="90" class="chem-text" fill="#f87171">O</text>
+              <line x1="130" y1="90" x2="145" y2="90" class="chem-bond"/><text x="160" y="90" class="chem-text">C2H5</text>` },
+      { id: 'diethyl_ether', name: 'ジエチルエーテル', formula: 'C4H10O', cat: 'oxygen', desc: 'エタノールに濃硫酸を加え約130℃で加熱すると得られる。揮発性・引火性が極めて高い溶媒。',
+        svg: `<text x="45" y="90" class="chem-text">C2H5</text><line x1="72" y1="90" x2="95" y2="90" class="chem-bond"/>
+              <text x="105" y="90" class="chem-text" fill="#f87171">O</text><line x1="115" y1="90" x2="138" y2="90" class="chem-bond"/>
+              <text x="158" y="90" class="chem-text">C2H5</text>` },
+      { id: 'acetic_anhydride', name: '無水酢酸', formula: 'C4H6O3', cat: 'oxygen', desc: '酢酸2分子が脱水縮合した酸無水物。サリチル酸やアニリンをアセチル化する際に用いる。',
+        svg: `<text x="38" y="65" class="chem-text">H3C-CO</text><line x1="78" y1="70" x2="96" y2="85" class="chem-bond"/>
+              <text x="105" y="90" class="chem-text" fill="#f87171">O</text>
+              <line x1="78" y1="110" x2="96" y2="95" class="chem-bond"/><text x="38" y="115" class="chem-text">H3C-CO</text>` },
+      { id: 'acetanilide', name: 'アセトアニリド', formula: 'C8H9NO', cat: 'oxygen', desc: 'アニリンに無水酢酸を作用させてアセチル化すると得られる中性結晶（アミド結合をもつ）。',
+        svg: `<polygon points="75,70 110,90 110,130 75,150 40,130 40,90" fill="none" class="chem-bond"/>
+              <line x1="75" y1="78" x2="103" y2="94" class="chem-bond"/><line x1="103" y1="126" x2="75" y2="142" class="chem-bond"/><line x1="47" y1="126" x2="47" y2="94" class="chem-bond"/>
+              <line x1="75" y1="70" x2="75" y2="48" class="chem-bond"/><text x="75" y="38" class="chem-text" fill="#38bdf8">NH</text>
+              <line x1="90" y1="38" x2="112" y2="38" class="chem-bond"/><text x="135" y="38" class="chem-text">COCH3</text>` }
+    ];
+
+    /* ==========================================================
+       2. 反応性・構造判定テスト問題群 (12種)
+       ========================================================== */
+    const REACTION_TESTS = [
       {
-        id: 'methane',
-        name: 'メタン',
-        formula: 'CH4',
-        category: 'aliphatic',
-        desc: '最も単純なアルカン。正四面体構造。天然ガスの主成分。光照射下で塩素と置換反応（ラジカル置換）を起こし、クロロメタン類を順次生成する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="90" y1="74" x2="90" y2="48" class="chem-bond" />
-          <line x1="90" y1="106" x2="90" y2="132" class="chem-bond" />
-          <line x1="74" y1="90" x2="48" y2="90" class="chem-bond" />
-          <line x1="106" y1="90" x2="132" y2="90" class="chem-bond" />
-          <text x="90" y="90" class="chem-txt chem-atom-c text-[17px]">C</text>
-          <text x="90" y="38" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="90" y="142" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="38" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="142" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-        </svg>`
+        question: 'ヨウ素と水酸化ナトリウム水溶液を加えて加熱すると、特有の黄色沈殿（ヨードホルム）を生じる分子はどれか？',
+        badge: 'ヨードホルム反応',
+        isTarget: c => ['ethanol', 'isopropanol', 'secbutanol', 'acetaldehyde', 'acetone'].includes(c.id),
+        desc: 'ヨードホルム反応は「CH3-CO-」または「CH3-CH(OH)-」の構造をもつ化合物で陽性となります。'
       },
       {
-        id: 'methanol',
-        name: 'メタノール',
-        formula: 'CH4O',
-        category: 'aliphatic',
-        desc: '最も単純なアルコール。有毒（失明や死に至る）。一酸化炭素と水素から工業的に合成。酸化するとホルムアルデヒドを経てギ酸となる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="56" y1="90" x2="74" y2="90" class="chem-bond" />
-          <line x1="74" y1="72" x2="74" y2="48" class="chem-bond" />
-          <line x1="74" y1="108" x2="74" y2="132" class="chem-bond" />
-          <line x1="88" y1="90" x2="114" y2="90" class="chem-bond" />
-          <line x1="130" y1="90" x2="148" y2="90" class="chem-bond" />
-          <text x="44" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="74" y="90" class="chem-txt chem-atom-c text-[17px]">C</text>
-          <text x="74" y="38" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="74" y="142" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="122" y="90" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="156" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-        </svg>`
+        question: 'アンモニア性硝酸銀水溶液を加えて穏やかに加熱したとき、銀が析出する（銀鏡反応を示す）分子はどれか？',
+        badge: '銀鏡反応 [還元性]',
+        isTarget: c => ['formaldehyde', 'acetaldehyde', 'formic_acid'].includes(c.id),
+        desc: 'アルデヒド基（-CHO）をもつ化合物は還元性を示します。ギ酸はカルボン酸でありながら-CHO基をもつため陽性です。'
       },
       {
-        id: 'ethylene',
-        name: 'エチレン (エテン)',
-        formula: 'C2H4',
-        category: 'aliphatic',
-        desc: '最も単純なアルケン。同一平面上の構造。臭素水を脱色する（付加反応）。付加重合でポリエチレンとなり、植物ホルモン（果実成熟）としても働く。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="76" y1="85" x2="104" y2="85" class="chem-bond-double" />
-          <line x1="76" y1="95" x2="104" y2="95" class="chem-bond-double" />
-          <line x1="62" y1="82" x2="44" y2="64" class="chem-bond" />
-          <line x1="62" y1="98" x2="44" y2="116" class="chem-bond" />
-          <line x1="118" y1="82" x2="136" y2="64" class="chem-bond" />
-          <line x1="118" y1="98" x2="136" y2="116" class="chem-bond" />
-          <text x="68" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="112" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="36" y="56" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="36" y="124" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="144" y="56" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="144" y="124" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
+        question: '塩化鉄(III) 水溶液を加えると、赤紫色〜青紫色に呈色する分子はどれか？',
+        badge: 'FeCl3 呈色反応',
+        isTarget: c => ['phenol', 'salicylic_acid', 'methyl_salicylate'].includes(c.id),
+        desc: 'ベンゼン環に直接結合したフェノール性-OH基をもつ化合物が特有の呈色反応を示します（アセチルサリチル酸はエステル化されているため呈色しません）。'
       },
       {
-        id: 'acetylene',
-        name: 'アセチレン (エチン)',
-        formula: 'C2H2',
-        category: 'aliphatic',
-        desc: '炭素間三重結合をもつ直線状分子。カーバイド(CaC2)に水を加えると発生。アンモニア性硝酸銀溶液に通すと銀アセチリド(白色沈殿)を生じる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="38" y1="90" x2="60" y2="90" class="chem-bond" />
-          <line x1="120" y1="90" x2="142" y2="90" class="chem-bond" />
-          <line x1="78" y1="82" x2="102" y2="82" stroke="#cbd5e1" stroke-width="2" />
-          <line x1="78" y1="90" x2="102" y2="90" stroke="#cbd5e1" stroke-width="2" />
-          <line x1="78" y1="98" x2="102" y2="98" stroke="#cbd5e1" stroke-width="2" />
-          <text x="28" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="70" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="110" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="152" y="90" class="chem-txt chem-atom-h text-[15px]">H</text>
-        </svg>`
+        question: '炭酸水素ナトリウム（NaHCO3）水溶液に加えると、気泡（二酸化炭素）を発生する分子はどれか？',
+        badge: '弱酸の遊離 [NaHCO3]',
+        isTarget: c => ['formic_acid', 'acetic_acid', 'maleic_acid', 'fumaric_acid', 'benzoic_acid', 'salicylic_acid', 'acetylsalicylic_acid', 'phthalic_acid', 'terephthalic_acid'].includes(c.id),
+        desc: '炭酸よりも酸性の強いカルボン酸（-COOH）をもつ分子は、NaHCO3と反応してCO2を遊離します。'
       },
       {
-        id: 'propylene',
-        name: 'プロペン (プロピレン)',
-        formula: 'C3H6',
-        category: 'aliphatic',
-        desc: '不飽和炭化水素。水（H2O）を付加させるとマルコフニコフ則に従い、主生成物として2-プロパノールが得られる。付加重合でポリプロピレンとなる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="52" y1="90" x2="76" y2="90" class="chem-bond" />
-          <line x1="102" y1="85" x2="128" y2="85" class="chem-bond-double" />
-          <line x1="102" y1="95" x2="128" y2="95" class="chem-bond-double" />
-          <line x1="90" y1="78" x2="90" y2="54" class="chem-bond" />
-          <line x1="148" y1="82" x2="162" y2="66" class="chem-bond" />
-          <line x1="148" y1="98" x2="162" y2="114" class="chem-bond" />
-          <text x="34" y="90" class="chem-txt chem-atom-c text-[14px]">H3C</text>
-          <text x="90" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="90" y="44" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="138" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="168" y="58" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="168" y="122" class="chem-txt chem-atom-h text-[13px]">H</text>
-        </svg>`
+        question: '臭素水（赤褐色）を加えたとき、付加反応によって速やかに脱色させる分子はどれか？',
+        badge: '不飽和結合・付加反応',
+        isTarget: c => ['ethene', 'ethyne', 'propene', 'styrene', 'maleic_acid', 'fumaric_acid'].includes(c.id),
+        desc: '炭素-炭素の二重結合（C=C）や三重結合（C≡C）などの不飽和結合をもつ分子は、臭素（Br2）が付加して脱色します。'
       },
       {
-        id: 'oxalic_acid',
-        name: 'シュウ酸',
-        formula: 'C2H2O4',
-        category: 'aliphatic',
-        desc: '最も単純なジカルボン酸。還元性をもち、酸性水溶液中で過マンガン酸カリウムを脱色する（酸化還元滴定の標準物質）。カルシウムイオンと不溶性沈殿を作る。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="72" y1="90" x2="108" y2="90" class="chem-bond" />
-          <line x1="56" y1="82" x2="56" y2="54" class="chem-bond-double" />
-          <line x1="64" y1="82" x2="64" y2="54" class="chem-bond-double" />
-          <line x1="50" y1="96" x2="30" y2="116" class="chem-bond" />
-          <line x1="116" y1="98" x2="116" y2="126" class="chem-bond-double" />
-          <line x1="124" y1="98" x2="124" y2="126" class="chem-bond-double" />
-          <line x1="130" y1="84" x2="150" y2="64" class="chem-bond" />
-          <text x="60" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="120" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="60" y="44" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="24" y="126" class="chem-txt chem-atom-o text-[13px]">HO</text>
-          <text x="120" y="136" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="156" y="54" class="chem-txt chem-atom-o text-[13px]">OH</text>
-        </svg>`
+        question: '不斉炭素原子をもち、互いに重ね合わせることができない鏡像異性体（光学異性体）が存在する分子はどれか？',
+        badge: '不斉炭素・鏡像異性体',
+        isTarget: c => ['secbutanol'].includes(c.id),
+        desc: '4つの異なる原子や原子団（-H, -OH, -CH3, -C2H5）が結合した炭素（不斉炭素）をもつため、鏡像異性体が存在します。'
       },
       {
-        id: 'fumaric_acid',
-        name: 'フマル酸',
-        formula: 'C4H4O4',
-        category: 'aliphatic',
-        desc: 'マレイン酸のトランス型幾何異性体。2つのカルボキシ基が反対側にあるため分子内脱水せず、融点が高く水に溶けにくい。クエン酸回路の中間体。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="78" y1="85" x2="102" y2="85" class="chem-bond-double" />
-          <line x1="78" y1="95" x2="102" y2="95" class="chem-bond-double" />
-          <line x1="64" y1="84" x2="48" y2="60" class="chem-bond" />
-          <line x1="64" y1="96" x2="48" y2="120" class="chem-bond" />
-          <line x1="116" y1="84" x2="132" y2="60" class="chem-bond" />
-          <line x1="116" y1="96" x2="132" y2="120" class="chem-bond" />
-          <text x="70" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="110" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="40" y="48" class="chem-txt chem-atom-c text-[12px]">HOOC</text>
-          <text x="40" y="132" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="140" y="48" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="142" y="132" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-        </svg>`
+        question: '水酸化ナトリウム水溶液を加えて加熱すると「けん化（エステル加水分解）」される分子はどれか？',
+        badge: 'けん化 [エステル]',
+        isTarget: c => ['ethyl_acetate', 'methyl_salicylate', 'acetylsalicylic_acid'].includes(c.id),
+        desc: 'エステル結合（-COO-）をもつ化合物は、強塩基水溶液により加水分解されてカルボン酸塩とアルコールになります。'
       },
       {
-        id: 'maleic_acid',
-        name: 'マレイン酸',
-        formula: 'C4H4O4',
-        category: 'aliphatic',
-        desc: '2つのカルボキシ基が二重結合の同一側にあるシス型幾何異性体。加熱すると分子内で容易に脱水して無水マレイン酸となる（フマル酸は分子間脱水）。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="78" y1="102" x2="102" y2="102" class="chem-bond-double" />
-          <line x1="78" y1="110" x2="102" y2="110" class="chem-bond-double" />
-          <line x1="64" y1="94" x2="52" y2="64" class="chem-bond" />
-          <line x1="116" y1="94" x2="128" y2="64" class="chem-bond" />
-          <line x1="64" y1="118" x2="50" y2="134" class="chem-bond" />
-          <line x1="116" y1="118" x2="130" y2="134" class="chem-bond" />
-          <text x="70" y="106" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="110" y="106" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="44" y="50" class="chem-txt chem-atom-c text-[13px]">HOOC</text>
-          <text x="136" y="50" class="chem-txt chem-atom-c text-[13px]">COOH</text>
-          <text x="42" y="144" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="138" y="144" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
+        question: '加熱すると分子内で容易に脱水し、酸無水物を生じる幾何異性体（シス体）はどれか？',
+        badge: '分子内脱水 [幾何異性体]',
+        isTarget: c => ['maleic_acid', 'phthalic_acid'].includes(c.id),
+        desc: 'マレイン酸（シス型）やフタル酸（オルト置換）は、2つのカルボキシ基が空間的に近接しているため分子内で脱水します。'
       },
       {
-        id: 'formaldehyde',
-        name: 'ホルムアルデヒド',
-        formula: 'CH2O',
-        category: 'aliphatic',
-        desc: '最も単純なアルデヒド。強い刺激臭のある気体で、約37%水溶液はホルマリン。銀鏡反応・フェーリング反応を示す。フェノール樹脂や尿素樹脂の原料。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="85" y1="84" x2="85" y2="54" class="chem-bond-double" />
-          <line x1="95" y1="84" x2="95" y2="54" class="chem-bond-double" />
-          <line x1="80" y1="102" x2="56" y2="124" class="chem-bond" />
-          <line x1="100" y1="102" x2="124" y2="124" class="chem-bond" />
-          <text x="90" y="44" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="90" y="94" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="46" y="132" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="134" y="132" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
+        question: 'さらし粉水溶液を加えると、特有の赤紫色に呈色する分子はどれか？',
+        badge: 'さらし粉呈色反応',
+        isTarget: c => ['aniline'].includes(c.id),
+        desc: 'アニリンはさらし粉水溶液（次亜塩素酸塩）によって酸化され、特有の赤紫色を呈します。'
       },
       {
-        id: 'formic_acid',
-        name: 'ギ酸 (メタン酸)',
-        formula: 'CH2O2',
-        category: 'aliphatic',
-        desc: 'カルボキシ基とアルデヒド基の両方の構造をもつため、カルボン酸でありながら強い還元性（銀鏡反応・フェーリング反応）を示す特異な化合物。濃硫酸で脱水すると一酸化炭素を生じる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="42" y1="96" x2="70" y2="96" class="chem-bond" />
-          <line x1="80" y1="84" x2="80" y2="54" class="chem-bond-double" />
-          <line x1="88" y1="84" x2="88" y2="54" class="chem-bond-double" />
-          <line x1="98" y1="96" x2="120" y2="96" class="chem-bond" />
-          <line x1="138" y1="96" x2="152" y2="96" class="chem-bond" />
-          <text x="30" y="96" class="chem-txt chem-atom-h text-[15px]">H</text>
-          <text x="84" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="84" y="42" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="128" y="96" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="160" y="96" class="chem-txt chem-atom-h text-[15px]">H</text>
-        </svg>`
+        question: '金属ナトリウム（Na）の単体を加えると、水素ガス（H2）を発生する分子はどれか？',
+        badge: 'ナトリウムとの反応',
+        isTarget: c => ['methanol', 'ethanol', 'isopropanol', 'secbutanol', 'ethylene_glycol', 'glycerol', 'phenol', 'acetic_acid'].includes(c.id),
+        desc: 'ヒドロキシ基（-OH）やカルボキシ基（-COOH）の水素原子はナトリウムにより還元され水素（H2）を発生します。'
       },
       {
-        id: 'isopropanol',
-        name: '2-プロパノール (IPA)',
-        formula: 'C3H8O',
-        category: 'aliphatic',
-        desc: '第二級アルコール。酸化するとアセトンを生じる。CH3-CH(OH)- 構造をもつためヨードホルム反応陽性（黄色沈殿）。消毒液や洗浄溶剤として汎用される。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="50" y1="90" x2="78" y2="90" class="chem-bond" />
-          <line x1="102" y1="90" x2="130" y2="90" class="chem-bond" />
-          <line x1="90" y1="78" x2="90" y2="54" class="chem-bond" />
-          <line x1="90" y1="102" x2="90" y2="126" class="chem-bond" />
-          <text x="30" y="90" class="chem-txt chem-atom-c text-[14px]">H3C</text>
-          <text x="90" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="150" y="90" class="chem-txt chem-atom-c text-[14px]">CH3</text>
-          <text x="90" y="44" class="chem-txt chem-atom-o text-[14px]">OH</text>
-          <text x="90" y="136" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
+        question: 'プロペンとベンゼンから合成され、過酸化物を経てフェノールとアセトンを併産する原料分子はどれか？',
+        badge: 'クメン法工業的製法',
+        isTarget: c => ['cumene'].includes(c.id),
+        desc: 'クメン法では、ベンゼンにプロペンを付加させてクメンをつくり、空気酸化と希硫酸処理でフェノールとアセトンが得られます。'
       },
       {
-        id: 'sec_butanol',
-        name: '2-ブタノール',
-        formula: 'C4H10O',
-        category: 'aliphatic',
-        desc: '第2級アルコール。中央の2位炭素が4つの異なる基（-H, -OH, -CH3, -C2H5）と結合する不斉炭素原子をもつ。CH3-CH(OH)- をもつためヨードホルム反応陽性。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="52" y1="90" x2="74" y2="90" class="chem-bond" />
-          <line x1="98" y1="90" x2="124" y2="90" class="chem-bond" />
-          <line x1="86" y1="78" x2="86" y2="54" class="chem-bond" />
-          <line x1="86" y1="102" x2="86" y2="126" class="chem-bond" />
-          <text x="34" y="90" class="chem-txt chem-atom-c text-[13px]">H3C</text>
-          <text x="86" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="146" y="90" class="chem-txt chem-atom-c text-[13px]">C2H5</text>
-          <text x="86" y="44" class="chem-txt chem-atom-o text-[13px]">OH</text>
-          <text x="86" y="136" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
-      },
-      {
-        id: 'ethylene_glycol',
-        name: 'エチレングリコール',
-        formula: 'C2H6O2',
-        category: 'aliphatic',
-        desc: '無色・粘稠で甘味のある2価アルコール（毒性あり）。親水性が高く不凍液に使用。テレフタル酸と縮合重合してポリエチレンテレフタラート(PET)を生成。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="78" y1="88" x2="102" y2="88" class="chem-bond" />
-          <line x1="68" y1="76" x2="68" y2="54" class="chem-bond" />
-          <line x1="68" y1="100" x2="68" y2="122" class="chem-bond" />
-          <line x1="56" y1="88" x2="38" y2="88" class="chem-bond" />
-          <line x1="112" y1="76" x2="112" y2="54" class="chem-bond" />
-          <line x1="112" y1="100" x2="112" y2="122" class="chem-bond" />
-          <line x1="124" y1="88" x2="142" y2="88" class="chem-bond" />
-          <text x="68" y="88" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="112" y="88" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="28" y="88" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="152" y="88" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="68" y="44" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="112" y="44" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="68" y="134" class="chem-txt chem-atom-o text-[13px]">OH</text>
-          <text x="112" y="134" class="chem-txt chem-atom-o text-[13px]">OH</text>
-        </svg>`
-      },
-      {
-        id: 'glycerol',
-        name: 'グリセリン (グリセロール)',
-        formula: 'C3H8O3',
-        category: 'aliphatic',
-        desc: '3価アルコール。高粘性で保湿性が高く化粧品に利用。天然油脂を加水分解すると脂肪酸塩（石けん）とともに生じる。濃硝酸でエステル化するとニトログリセリン。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="58" y1="88" x2="80" y2="88" class="chem-bond" />
-          <line x1="100" y1="88" x2="122" y2="88" class="chem-bond" />
-          <line x1="38" y1="88" x2="26" y2="88" class="chem-bond" />
-          <line x1="142" y1="88" x2="154" y2="88" class="chem-bond" />
-          <line x1="48" y1="76" x2="48" y2="56" class="chem-bond" />
-          <line x1="90" y1="76" x2="90" y2="56" class="chem-bond" />
-          <line x1="132" y1="76" x2="132" y2="56" class="chem-bond" />
-          <line x1="48" y1="100" x2="48" y2="120" class="chem-bond" />
-          <line x1="90" y1="100" x2="90" y2="120" class="chem-bond" />
-          <line x1="132" y1="100" x2="132" y2="120" class="chem-bond" />
-          <text x="48" y="88" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="90" y="88" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="132" y="88" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="18" y="88" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="162" y="88" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="48" y="46" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="90" y="46" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="132" y="46" class="chem-txt chem-atom-h text-[13px]">H</text>
-          <text x="48" y="132" class="chem-txt chem-atom-o text-[12px]">OH</text>
-          <text x="90" y="132" class="chem-txt chem-atom-o text-[12px]">OH</text>
-          <text x="132" y="132" class="chem-txt chem-atom-o text-[12px]">OH</text>
-        </svg>`
-      },
-      {
-        id: 'lactic_acid',
-        name: '乳酸',
-        formula: 'C3H6O3',
-        category: 'aliphatic',
-        desc: 'ヒドロキシ酸の一種。中央の炭素原子が4つの異なる基（-H, -CH3, -OH, -COOH）と結合する不斉炭素原子をもち、鏡像異性体（光学異性体）が存在する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="76" y1="90" x2="52" y2="90" class="chem-bond" />
-          <line x1="104" y1="90" x2="124" y2="90" class="chem-bond" />
-          <line x1="90" y1="76" x2="90" y2="54" class="chem-bond" />
-          <line x1="90" y1="104" x2="90" y2="126" class="chem-bond" />
-          <text x="90" y="90" class="chem-txt chem-atom-c text-[17px]">C</text>
-          <text x="34" y="90" class="chem-txt chem-atom-c text-[13px]">H3C</text>
-          <text x="146" y="90" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-          <text x="90" y="44" class="chem-txt chem-atom-o text-[13px]">OH</text>
-          <text x="90" y="136" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
-      },
-      {
-        id: 'benzene',
-        name: 'ベンゼン',
-        formula: 'C6H6',
-        category: 'aromatic',
-        desc: '無色揮発性の芳香族炭化水素。ケクレ構造（単結合と二重結合が交互に配置）で表される共鳴混成体。置換反応を起こしやすい。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,40 132,64 132,114 90,138 48,114 48,64" fill="none" class="chem-bond" />
-          <line x1="124" y1="70" x2="124" y2="108" class="chem-bond-double" />
-          <line x1="86" y1="130" x2="56" y2="112" class="chem-bond-double" />
-          <line x1="56" y1="67" x2="86" y2="49" class="chem-bond-double" />
-        </svg>`
-      },
-      {
-        id: 'toluene',
-        name: 'トルエン',
-        formula: 'C7H8',
-        category: 'aromatic',
-        desc: 'メチルベンゼン。過マンガン酸カリウムで酸化すると安息香酸を生じる。濃硝酸・濃硫酸で激しくニトロ化するとTNTを生成する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,64 128,86 128,130 90,152 52,130 52,86" fill="none" class="chem-bond" />
-          <line x1="120" y1="91" x2="120" y2="125" class="chem-bond-double" />
-          <line x1="86" y1="144" x2="60" y2="128" class="chem-bond-double" />
-          <line x1="60" y1="88" x2="86" y2="73" class="chem-bond-double" />
-          <line x1="90" y1="64" x2="90" y2="40" class="chem-bond" />
-          <text x="90" y="30" class="chem-txt chem-atom-c text-[13px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'styrene',
-        name: 'スチレン (ビニルベンゼン)',
-        formula: 'C8H8',
-        category: 'aromatic',
-        desc: 'ベンゼン環にビニル基（-CH=CH2）が直結。臭素水を速やかに脱色する。付加重合により発泡スチロールなどの原料であるポリスチレンになる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="76,72 112,94 112,136 76,158 40,136 40,94" fill="none" class="chem-bond" />
-          <line x1="104" y1="99" x2="104" y2="131" class="chem-bond-double" />
-          <line x1="72" y1="150" x2="48" y2="136" class="chem-bond-double" />
-          <line x1="48" y1="99" x2="72" y2="84" class="chem-bond-double" />
-          <line x1="76" y1="72" x2="76" y2="48" class="chem-bond" />
-          <line x1="96" y1="36" x2="122" y2="36" class="chem-bond-double" />
-          <line x1="96" y1="44" x2="122" y2="44" class="chem-bond-double" />
-          <text x="76" y="38" class="chem-txt chem-atom-c text-[12px]">CH</text>
-          <text x="142" y="40" class="chem-txt chem-atom-c text-[12px]">CH2</text>
-        </svg>`
-      },
-      {
-        id: 'cumene',
-        name: 'クメン (イソプロピルベンゼン)',
-        formula: 'C9H12',
-        category: 'aromatic',
-        desc: 'ベンゼンとプロペンから合成。空気酸化してクメンヒドロペルオキシドとし、希硫酸で分解するとフェノールとアセトンを工業的に同時併産する（クメン法）。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,72 126,94 126,136 90,158 54,136 54,94" fill="none" class="chem-bond" />
-          <line x1="118" y1="99" x2="118" y2="131" class="chem-bond-double" />
-          <line x1="86" y1="150" x2="62" y2="136" class="chem-bond-double" />
-          <line x1="62" y1="99" x2="86" y2="84" class="chem-bond-double" />
-          <line x1="90" y1="72" x2="90" y2="52" class="chem-bond" />
-          <line x1="80" y1="40" x2="58" y2="28" class="chem-bond" />
-          <line x1="100" y1="40" x2="122" y2="28" class="chem-bond" />
-          <text x="90" y="42" class="chem-txt chem-atom-c text-[12px]">CH</text>
-          <text x="44" y="24" class="chem-txt chem-atom-c text-[12px]">H3C</text>
-          <text x="136" y="24" class="chem-txt chem-atom-c text-[12px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'o_xylene',
-        name: 'o-キシレン',
-        formula: 'C8H10',
-        category: 'aromatic',
-        desc: 'ベンゼン環の隣接するオルト位に2つのメチル基をもつ。過マンガン酸カリウムで酸化するとフタル酸となり、加熱で無水フタル酸となる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="76,68 114,90 114,134 76,156 38,134 38,90" fill="none" class="chem-bond" />
-          <line x1="106" y1="95" x2="106" y2="129" class="chem-bond-double" />
-          <line x1="72" y1="148" x2="46" y2="132" class="chem-bond-double" />
-          <line x1="46" y1="92" x2="72" y2="77" class="chem-bond-double" />
-          <line x1="76" y1="68" x2="76" y2="44" class="chem-bond" />
-          <line x1="114" y1="90" x2="136" y2="78" class="chem-bond" />
-          <text x="76" y="34" class="chem-txt chem-atom-c text-[12px]">CH3</text>
-          <text x="150" y="74" class="chem-txt chem-atom-c text-[12px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'p_xylene',
-        name: 'p-キシレン',
-        formula: 'C8H10',
-        category: 'aromatic',
-        desc: 'パラ位に対向する2つのメチル基をもつ。酸化するとポリエチレンテレフタラート(PET)の合成原料であるテレフタル酸を生成する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,56 124,76 124,116 90,136 56,116 56,76" fill="none" class="chem-bond" />
-          <line x1="116" y1="81" x2="116" y2="111" class="chem-bond-double" />
-          <line x1="86" y1="128" x2="64" y2="114" class="chem-bond-double" />
-          <line x1="64" y1="78" x2="86" y2="65" class="chem-bond-double" />
-          <line x1="90" y1="56" x2="90" y2="34" class="chem-bond" />
-          <line x1="90" y1="136" x2="90" y2="158" class="chem-bond" />
-          <text x="90" y="24" class="chem-txt chem-atom-c text-[12px]">CH3</text>
-          <text x="90" y="168" class="chem-txt chem-atom-c text-[12px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'phenol',
-        name: 'フェノール',
-        formula: 'C6H6O',
-        category: 'aromatic',
-        desc: 'ベンゼン環にヒドロキシ基が直結。弱酸性を示し、塩化鉄(III)水溶液で青紫色〜紫色に呈色する。臭素水で白色沈殿(2,4,6-トリブロモフェノール)を生じる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,64 128,86 128,130 90,152 52,130 52,86" fill="none" class="chem-bond" />
-          <line x1="120" y1="91" x2="120" y2="125" class="chem-bond-double" />
-          <line x1="86" y1="144" x2="60" y2="128" class="chem-bond-double" />
-          <line x1="60" y1="88" x2="86" y2="73" class="chem-bond-double" />
-          <line x1="90" y1="64" x2="90" y2="40" class="chem-bond" />
-          <text x="90" y="30" class="chem-txt chem-atom-o text-[14px]">OH</text>
-        </svg>`
-      },
-      {
-        id: 'picric_acid',
-        name: 'ピクリン酸 (2,4,6-トリニトロフェノール)',
-        formula: 'C6H3N3O7',
-        category: 'aromatic',
-        desc: 'フェノールを濃硝酸と濃硫酸で激しくニトロ化して得られる黄色針状結晶。ニトロ基の電子求引性により炭酸や酢酸より強い酸性を示す。爆薬や黄色染料に用いられた。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,62 124,82 124,122 90,142 56,122 56,82" fill="none" class="chem-bond" />
-          <line x1="116" y1="87" x2="116" y2="117" class="chem-bond-double" />
-          <line x1="86" y1="134" x2="64" y2="120" class="chem-bond-double" />
-          <line x1="64" y1="84" x2="86" y2="71" class="chem-bond-double" />
-          <line x1="90" y1="62" x2="90" y2="42" class="chem-bond" />
-          <line x1="56" y1="82" x2="36" y2="72" class="chem-bond" />
-          <line x1="124" y1="82" x2="144" y2="72" class="chem-bond" />
-          <line x1="90" y1="142" x2="90" y2="160" class="chem-bond" />
-          <text x="90" y="32" class="chem-txt chem-atom-o text-[13px]">OH</text>
-          <text x="24" y="68" class="chem-txt chem-atom-n text-[11px]">O2N</text>
-          <text x="156" y="68" class="chem-txt chem-atom-n text-[11px]">NO2</text>
-          <text x="90" y="170" class="chem-txt chem-atom-n text-[11px]">NO2</text>
-        </svg>`
-      },
-      {
-        id: 'benzoic_acid',
-        name: '安息香酸',
-        formula: 'C7H6O2',
-        category: 'aromatic',
-        desc: 'ベンゼン環にカルボキシ基。白色結晶。炭酸水素ナトリウム水溶液に溶けて二酸化炭素を遊離する（炭酸より強い酸）。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,66 128,88 128,132 90,154 52,132 52,88" fill="none" class="chem-bond" />
-          <line x1="120" y1="93" x2="120" y2="127" class="chem-bond-double" />
-          <line x1="86" y1="146" x2="60" y2="130" class="chem-bond-double" />
-          <line x1="60" y1="90" x2="86" y2="75" class="chem-bond-double" />
-          <line x1="90" y1="66" x2="90" y2="42" class="chem-bond" />
-          <text x="90" y="32" class="chem-txt chem-atom-c text-[13px]">COOH</text>
-        </svg>`
-      },
-      {
-        id: 'phthalic_acid',
-        name: 'フタル酸',
-        formula: 'C8H6O4',
-        category: 'aromatic',
-        desc: 'o-キシレンやナフタレンを酸化して得られる芳香族ジカルボン酸。2つのカルボキシ基がオルト位に近接するため、加熱すると容易に分子内脱水して無水フタル酸となる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="74,70 110,92 110,134 74,156 38,134 38,92" fill="none" class="chem-bond" />
-          <line x1="102" y1="97" x2="102" y2="129" class="chem-bond-double" />
-          <line x1="70" y1="148" x2="46" y2="132" class="chem-bond-double" />
-          <line x1="46" y1="94" x2="70" y2="79" class="chem-bond-double" />
-          <line x1="74" y1="70" x2="74" y2="46" class="chem-bond" />
-          <line x1="110" y1="92" x2="132" y2="82" class="chem-bond" />
-          <text x="74" y="34" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-          <text x="148" y="80" class="chem-txt chem-atom-c text-[11px]">COOH</text>
-        </svg>`
-      },
-      {
-        id: 'terephthalic_acid',
-        name: 'テレフタル酸',
-        formula: 'C8H6O4',
-        category: 'aromatic',
-        desc: 'p-キシレンを酸化して得られるパラ置換ジカルボン酸。分子内脱水はしない。エチレングリコールと縮合重合してPET樹脂やポリエステル繊維を生成する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,58 124,78 124,118 90,138 56,118 56,78" fill="none" class="chem-bond" />
-          <line x1="116" y1="83" x2="116" y2="113" class="chem-bond-double" />
-          <line x1="86" y1="130" x2="64" y2="116" class="chem-bond-double" />
-          <line x1="64" y1="80" x2="86" y2="67" class="chem-bond-double" />
-          <line x1="90" y1="58" x2="90" y2="38" class="chem-bond" />
-          <line x1="90" y1="138" x2="90" y2="158" class="chem-bond" />
-          <text x="90" y="26" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-          <text x="90" y="168" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-        </svg>`
-      },
-      {
-        id: 'salicylic_acid',
-        name: 'サリチル酸',
-        formula: 'C7H6O3',
-        category: 'aromatic',
-        desc: 'フェノール類とカルボン酸の両方の性質をもつ。塩化鉄(III)で紫色に呈色。アセチル化で解熱鎮痛剤アスピリンに、メタノールとエステル化で湿布薬サリチル酸メチルになる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="76,68 114,90 114,134 76,156 38,134 38,90" fill="none" class="chem-bond" />
-          <line x1="106" y1="95" x2="106" y2="129" class="chem-bond-double" />
-          <line x1="72" y1="148" x2="46" y2="132" class="chem-bond-double" />
-          <line x1="46" y1="92" x2="72" y2="77" class="chem-bond-double" />
-          <line x1="76" y1="68" x2="76" y2="44" class="chem-bond" />
-          <line x1="114" y1="90" x2="136" y2="78" class="chem-bond" />
-          <text x="76" y="32" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-          <text x="148" y="74" class="chem-txt chem-atom-o text-[13px]">OH</text>
-        </svg>`
-      },
-      {
-        id: 'acetylsalicylic_acid',
-        name: 'アセチルサリチル酸 (アスピリン)',
-        formula: 'C9H8O4',
-        category: 'aromatic',
-        desc: 'サリチル酸のフェノール性-OH基を無水酢酸でアセチル化した医薬品（解熱鎮痛薬）。フェノール性-OHが失われているため塩化鉄(III)呈色反応は示さない。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="70,70 108,92 108,136 70,158 32,136 32,92" fill="none" class="chem-bond" />
-          <line x1="100" y1="97" x2="100" y2="131" class="chem-bond-double" />
-          <line x1="66" y1="150" x2="40" y2="134" class="chem-bond-double" />
-          <line x1="40" y1="94" x2="66" y2="79" class="chem-bond-double" />
-          <line x1="70" y1="70" x2="70" y2="46" class="chem-bond" />
-          <line x1="108" y1="92" x2="128" y2="82" class="chem-bond" />
-          <text x="70" y="34" class="chem-txt chem-atom-c text-[12px]">COOH</text>
-          <text x="148" y="80" class="chem-txt chem-atom-o text-[10px]">OCOCH3</text>
-        </svg>`
-      },
-      {
-        id: 'methyl_salicylate',
-        name: 'サリチル酸メチル',
-        formula: 'C8H8O3',
-        category: 'aromatic',
-        desc: 'サリチル酸のカルボキシ基とメタノールがエステル結合。特有の芳香（消炎鎮痛湿布のにおい）。フェノール性-OH基が残るため塩化鉄(III)で赤紫色に呈色する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="70,70 108,92 108,136 70,158 32,136 32,92" fill="none" class="chem-bond" />
-          <line x1="100" y1="97" x2="100" y2="131" class="chem-bond-double" />
-          <line x1="66" y1="150" x2="40" y2="134" class="chem-bond-double" />
-          <line x1="40" y1="94" x2="66" y2="79" class="chem-bond-double" />
-          <line x1="70" y1="70" x2="70" y2="46" class="chem-bond" />
-          <line x1="108" y1="92" x2="130" y2="80" class="chem-bond" />
-          <text x="70" y="34" class="chem-txt chem-atom-c text-[11px]">COOCH3</text>
-          <text x="144" y="76" class="chem-txt chem-atom-o text-[13px]">OH</text>
-        </svg>`
-      },
-      {
-        id: 'ethanol',
-        name: 'エタノール',
-        formula: 'C2H6O',
-        category: 'oxygen',
-        desc: '第一級アルコール。ナトリウムと反応して水素を発生する。酸化するとアセトアルデヒドを経て酢酸になる。ヨードホルム反応陽性（黄色沈殿CHI3）。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="36" y1="90" x2="52" y2="90" class="chem-bond" />
-          <line x1="68" y1="90" x2="92" y2="90" class="chem-bond" />
-          <line x1="108" y1="90" x2="132" y2="90" class="chem-bond" />
-          <line x1="146" y1="90" x2="158" y2="90" class="chem-bond" />
-          <line x1="60" y1="78" x2="60" y2="56" class="chem-bond" />
-          <line x1="60" y1="102" x2="60" y2="124" class="chem-bond" />
-          <line x1="100" y1="78" x2="100" y2="56" class="chem-bond" />
-          <line x1="100" y1="102" x2="100" y2="124" class="chem-bond" />
-          <text x="26" y="90" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="60" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="100" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="140" y="90" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="166" y="90" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="60" y="46" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="60" y="134" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="100" y="46" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="100" y="134" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
-      },
-      {
-        id: 'acetaldehyde',
-        name: 'アセトアルデヒド',
-        formula: 'C2H4O',
-        category: 'oxygen',
-        desc: '刺激臭のある液体。還元性をもち、銀鏡反応およびフェーリング反応陽性。また CH3-CO- 構造を持つためヨードホルム反応も陽性。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="68" y1="96" x2="100" y2="96" class="chem-bond" />
-          <line x1="46" y1="96" x2="28" y2="96" class="chem-bond" />
-          <line x1="58" y1="84" x2="58" y2="62" class="chem-bond" />
-          <line x1="58" y1="108" x2="58" y2="130" class="chem-bond" />
-          <line x1="106" y1="84" x2="106" y2="54" class="chem-bond-double" />
-          <line x1="114" y1="84" x2="114" y2="54" class="chem-bond-double" />
-          <line x1="120" y1="96" x2="144" y2="96" class="chem-bond" />
-          <text x="58" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="110" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="110" y="44" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="154" y="96" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="18" y="96" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="58" y="52" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="58" y="140" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
-      },
-      {
-        id: 'acetic_acid',
-        name: '酢酸',
-        formula: 'C2H4O2',
-        category: 'oxygen',
-        desc: '食酢の主成分。弱酸性で刺激臭をもつ。純粋なものは冬季に凝固するため「氷酢酸」と呼ばれる。十酸化四リンで脱水すると無水酢酸を生じる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="68" y1="96" x2="98" y2="96" class="chem-bond" />
-          <line x1="46" y1="96" x2="28" y2="96" class="chem-bond" />
-          <line x1="58" y1="84" x2="58" y2="62" class="chem-bond" />
-          <line x1="58" y1="108" x2="58" y2="130" class="chem-bond" />
-          <line x1="104" y1="84" x2="104" y2="54" class="chem-bond-double" />
-          <line x1="112" y1="84" x2="112" y2="54" class="chem-bond-double" />
-          <line x1="118" y1="96" x2="134" y2="96" class="chem-bond" />
-          <line x1="148" y1="96" x2="160" y2="96" class="chem-bond" />
-          <text x="58" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="108" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="108" y="44" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="142" y="96" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="168" y="96" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="18" y="96" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="58" y="52" class="chem-txt chem-atom-h text-[14px]">H</text>
-          <text x="58" y="140" class="chem-txt chem-atom-h text-[14px]">H</text>
-        </svg>`
-      },
-      {
-        id: 'acetic_anhydride',
-        name: '無水酢酸',
-        formula: 'C4H6O3',
-        category: 'oxygen',
-        desc: '酢酸2分子が脱水縮合した構造。刺激臭をもつ液体。アルコールやアミンのアセチル化剤として利用され、サリチル酸と反応してアスピリンを、アニリンと反応してアセトアニリドを生成する。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="46" y1="94" x2="64" y2="94" class="chem-bond" />
-          <line x1="84" y1="94" x2="98" y2="94" class="chem-bond" />
-          <line x1="112" y1="94" x2="126" y2="94" class="chem-bond" />
-          <line x1="146" y1="94" x2="162" y2="94" class="chem-bond" />
-          <line x1="70" y1="84" x2="70" y2="56" class="chem-bond-double" />
-          <line x1="78" y1="84" x2="78" y2="56" class="chem-bond-double" />
-          <line x1="132" y1="84" x2="132" y2="56" class="chem-bond-double" />
-          <line x1="140" y1="84" x2="140" y2="56" class="chem-bond-double" />
-          <text x="28" y="94" class="chem-txt chem-atom-c text-[12px]">H3C</text>
-          <text x="74" y="94" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="74" y="46" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="105" y="94" class="chem-txt chem-atom-o text-[16px]">O</text>
-          <text x="136" y="94" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="136" y="46" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="168" y="94" class="chem-txt chem-atom-c text-[11px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'acetone',
-        name: 'アセトン',
-        formula: 'C3H6O',
-        category: 'oxygen',
-        desc: '代表的なケトン。水や有機溶媒によく溶ける引火性液体。銀鏡反応は陰性（還元性なし）だが、CH3-CO- 構造を持つためヨードホルム反応は陽性。酢酸カルシウムの乾留でも得られる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="52" y1="96" x2="80" y2="96" class="chem-bond" />
-          <line x1="100" y1="96" x2="128" y2="96" class="chem-bond" />
-          <line x1="86" y1="84" x2="86" y2="54" class="chem-bond-double" />
-          <line x1="94" y1="84" x2="94" y2="54" class="chem-bond-double" />
-          <text x="32" y="96" class="chem-txt chem-atom-c text-[14px]">H3C</text>
-          <text x="90" y="96" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="148" y="96" class="chem-txt chem-atom-c text-[14px]">CH3</text>
-          <text x="90" y="44" class="chem-txt chem-atom-o text-[16px]">O</text>
-        </svg>`
-      },
-      {
-        id: 'diethyl_ether',
-        name: 'ジエチルエーテル',
-        formula: 'C4H10O',
-        category: 'oxygen',
-        desc: 'エタノールを約130〜140℃で濃硫酸とともに加熱すると分子間脱水して生成。揮発性・引火性が極めて高い。エタノールの構造異性体（1-ブタノールと同分異性体）。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="54" y1="90" x2="80" y2="90" class="chem-bond" />
-          <line x1="100" y1="90" x2="126" y2="90" class="chem-bond" />
-          <text x="32" y="90" class="chem-txt chem-atom-c text-[14px]">C2H5</text>
-          <text x="90" y="90" class="chem-txt chem-atom-o text-[17px]">O</text>
-          <text x="148" y="90" class="chem-txt chem-atom-c text-[14px]">C2H5</text>
-        </svg>`
-      },
-      {
-        id: 'ethyl_acetate',
-        name: '酢酸エチル',
-        formula: 'C4H8O2',
-        category: 'oxygen',
-        desc: '酢酸とエタノールを濃硫酸触媒で脱水縮合（エステル化）して生成。芳香のある中性液体。水に難溶で水より軽い。けん化で酢酸塩とエタノールになる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="48" y1="94" x2="68" y2="94" class="chem-bond" />
-          <line x1="88" y1="94" x2="106" y2="94" class="chem-bond" />
-          <line x1="124" y1="94" x2="142" y2="94" class="chem-bond" />
-          <line x1="74" y1="82" x2="74" y2="54" class="chem-bond-double" />
-          <line x1="82" y1="82" x2="82" y2="54" class="chem-bond-double" />
-          <text x="32" y="94" class="chem-txt chem-atom-c text-[13px]">CH3</text>
-          <text x="78" y="94" class="chem-txt chem-atom-c text-[15px]">C</text>
-          <text x="78" y="44" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="114" y="94" class="chem-txt chem-atom-o text-[15px]">O</text>
-          <text x="156" y="94" class="chem-txt chem-atom-c text-[12px]">C2H5</text>
-        </svg>`
-      },
-      {
-        id: 'aniline',
-        name: 'アニリン',
-        formula: 'C6H7N',
-        category: 'nitrogen',
-        desc: '芳香族第一級アミン。弱塩基性。さらし粉水溶液で赤紫色に呈色。亜硝酸ナトリウムと塩酸でジアゾ化されて塩化ベンゼンジアゾニウムを生成。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,64 128,86 128,130 90,152 52,130 52,86" fill="none" class="chem-bond" />
-          <line x1="120" y1="91" x2="120" y2="125" class="chem-bond-double" />
-          <line x1="86" y1="144" x2="60" y2="128" class="chem-bond-double" />
-          <line x1="60" y1="88" x2="86" y2="73" class="chem-bond-double" />
-          <line x1="90" y1="64" x2="90" y2="40" class="chem-bond" />
-          <text x="90" y="30" class="chem-txt chem-atom-n text-[13px]">NH2</text>
-        </svg>`
-      },
-      {
-        id: 'acetanilide',
-        name: 'アセトアニリド',
-        formula: 'C8H9NO',
-        category: 'nitrogen',
-        desc: 'アニリンに無水酢酸を作用させてアセチル化して得られる白色板状結晶。アミノ基の塩基性が失われて中性を示す。かつて解熱鎮痛剤として用いられた。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,74 126,96 126,138 90,160 54,138 54,96" fill="none" class="chem-bond" />
-          <line x1="118" y1="101" x2="118" y2="133" class="chem-bond-double" />
-          <line x1="86" y1="152" x2="62" y2="138" class="chem-bond-double" />
-          <line x1="62" y1="101" x2="86" y2="86" class="chem-bond-double" />
-          <line x1="90" y1="74" x2="90" y2="52" class="chem-bond" />
-          <line x1="104" y1="42" x2="122" y2="42" class="chem-bond" />
-          <line x1="130" y1="34" x2="130" y2="18" class="chem-bond-double" />
-          <line x1="138" y1="34" x2="138" y2="18" class="chem-bond-double" />
-          <line x1="144" y1="42" x2="160" y2="42" class="chem-bond" />
-          <text x="90" y="44" class="chem-txt chem-atom-n text-[12px]">NH</text>
-          <text x="134" y="44" class="chem-txt chem-atom-c text-[12px]">C</text>
-          <text x="134" y="12" class="chem-txt chem-atom-o text-[12px]">O</text>
-          <text x="168" y="44" class="chem-txt chem-atom-c text-[10px]">CH3</text>
-        </svg>`
-      },
-      {
-        id: 'nitrobenzene',
-        name: 'ニトロベンゼン',
-        formula: 'C6H5NO2',
-        category: 'nitrogen',
-        desc: 'ベンゼンを濃硝酸と濃硫酸（混酸）でニトロ化して得られる。淡黄色で特有の杏仁香（アーモンド臭）をもつ油状液体。水より重い。スズと塩酸で還元するとアニリンになる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <polygon points="90,66 128,88 128,132 90,154 52,132 52,88" fill="none" class="chem-bond" />
-          <line x1="120" y1="93" x2="120" y2="127" class="chem-bond-double" />
-          <line x1="86" y1="146" x2="60" y2="130" class="chem-bond-double" />
-          <line x1="60" y1="90" x2="86" y2="75" class="chem-bond-double" />
-          <line x1="90" y1="66" x2="90" y2="42" class="chem-bond" />
-          <text x="90" y="32" class="chem-txt chem-atom-n text-[13px]">NO2</text>
-        </svg>`
-      },
-      {
-        id: 'acetonitrile',
-        name: 'アセトニトリル (シアン化メチル)',
-        formula: 'C2H3N',
-        category: 'nitrogen',
-        desc: 'シアノ基（-C≡N）をもつ有機ニトリル化合物。極性非プロトン性溶媒としてHPLCや有機合成で汎用される。酸やアルカリで加水分解すると酢酸とアンモニアを生じる。',
-        svg: `<svg viewBox="0 0 180 180" class="w-full h-full max-w-[150px] max-h-[150px]">
-          <line x1="52" y1="90" x2="80" y2="90" class="chem-bond" />
-          <line x1="102" y1="82" x2="128" y2="82" stroke="#cbd5e1" stroke-width="2" />
-          <line x1="102" y1="90" x2="128" y2="90" stroke="#cbd5e1" stroke-width="2" />
-          <line x1="102" y1="98" x2="128" y2="98" stroke="#cbd5e1" stroke-width="2" />
-          <text x="32" y="90" class="chem-txt chem-atom-c text-[14px]">H3C</text>
-          <text x="92" y="90" class="chem-txt chem-atom-c text-[16px]">C</text>
-          <text x="140" y="90" class="chem-txt chem-atom-n text-[16px]">N</text>
-        </svg>`
+        question: '強酸化剤で酸化すると、ポリエステル（PET）の原料である「テレフタル酸」を生成するパラ置換芳香族はどれか？',
+        badge: '芳香族の酸化反応',
+        isTarget: c => ['p_xylene'].includes(c.id),
+        desc: 'p-キシレンの2つのメチル基（-CH3）を過マンガン酸カリウム等で酸化すると、対角位にカルボキシ基をもつテレフタル酸になります。'
       }
     ];
 
-    // Category mapping & state
-    const CATEGORY_NAMES = {
-      all: '全分野ミックス',
-      aliphatic: '脂肪族化合物',
-      aromatic: '芳香族化合物',
-      oxygen: '酸素含有化合物',
-      nitrogen: '窒素含有化合物'
-    };
-
-    const CATEGORY_DESCS = {
-      all: '全36化合物の構造式からランダム出題。総合演習に最適です。',
-      aliphatic: 'メタン、アルケン、アルキン、多価アルコール、幾何異性体などを集中特訓。',
-      aromatic: 'ベンゼン誘導体、フェノール類、キシレン、サリチル酸誘導体を中心に出題。',
-      oxygen: 'アルデヒド、ケトン、カルボン酸、酸無水物、エステルなどの重要物質を網羅。',
-      nitrogen: 'アニリン、アセトアニリド、ニトロベンゼンなど呈色やジアゾ化を伴う窒素化合物。'
-    };
-
-    let selectedCategory = 'all';
-
-    // 高校化学で頻出の代表的反応・性質ルール定義
-    const REACTION_RULES = [
-      {
-        id: 'iodoform',
-        question: 'ヨードホルム反応（I2 + NaOH 水溶液で特有の黄色沈殿 CHI3 を生じる）を示すものはどれか？',
-        shortTag: 'ヨードホルム反応',
-        matches: ['ethanol', 'isopropanol', 'sec_butanol', 'acetaldehyde', 'acetone'],
-        reason: 'CH3-CH(OH)- または CH3-CO- の特異構造をもつため、ヨードホルム反応陽性となります。'
-      },
-      {
-        id: 'silver_mirror',
-        question: 'アンモニア性硝酸銀水溶液を還元して銀を析出する（銀鏡反応を示す）化合物はどれか？',
-        shortTag: '銀鏡反応 (還元性)',
-        matches: ['formaldehyde', 'formic_acid', 'acetaldehyde'],
-        reason: '還元性のあるアルデヒド基（-CHO）をもつためです（ギ酸も分子内に-CHO構造を含みます）。'
-      },
-      {
-        id: 'fehling',
-        question: 'フェーリング液を加えて加熱すると、酸化銅(I) Cu2O の赤色沈殿を生じる化合物はどれか？',
-        shortTag: 'フェーリング反応',
-        matches: ['formaldehyde', 'formic_acid', 'acetaldehyde'],
-        reason: 'アルデヒド基（-CHO）の強い還元性によって銅(II)イオンが還元され、Cu2Oの赤色沈殿を生じます。'
-      },
-      {
-        id: 'fecl3_color',
-        question: '塩化鉄(III)水溶液 FeCl3 を加えると、紫色〜青紫色に呈色するものはどれか？',
-        shortTag: 'FeCl3 呈色反応',
-        matches: ['phenol', 'salicylic_acid', 'methyl_salicylate'],
-        reason: 'ベンゼン環に直結したフェノール性ヒドロキシ基（-OH）をもつため錯イオンを形成して呈色します（アスピリンやピクリン酸は呈色しません）。'
-      },
-      {
-        id: 'sodium_gas',
-        question: '単体のナトリウム（Na）小片を加えると、穏やかに気泡（水素 H2）を発生して溶けるものはどれか？',
-        shortTag: 'Naとの反応 (H2発生)',
-        matches: ['methanol', 'ethanol', 'isopropanol', 'sec_butanol', 'ethylene_glycol', 'glycerol', 'formic_acid', 'acetic_acid', 'lactic_acid'],
-        reason: 'アルコールやカルボン酸のヒドロキシ基（-OH）はナトリウムと反応し、ナトリウムアルコキシドやカルボン酸塩を作ってH2を発生します。'
-      },
-      {
-        id: 'nahco3_gas',
-        question: '炭酸水素ナトリウム NaHCO3 水溶液に加えると、二酸化炭素 CO2 の気泡を発生して溶けるものはどれか？',
-        shortTag: '弱酸の遊離 (CO2発生)',
-        matches: ['formic_acid', 'acetic_acid', 'benzoic_acid', 'salicylic_acid', 'acetylsalicylic_acid', 'maleic_acid', 'fumaric_acid', 'phthalic_acid', 'terephthalic_acid', 'oxalic_acid', 'lactic_acid', 'picric_acid'],
-        reason: '炭酸よりも酸性度が強いカルボン酸（-COOH）または強い電子求引基を持つピクリン酸は、炭酸水素塩からCO2を遊離させます。'
-      },
-      {
-        id: 'bromine_addition',
-        question: '臭素水 Br2 を加えると、速やかに付加反応を起こして赤褐色が脱色される化合物はどれか？',
-        shortTag: '不飽和結合・付加脱色',
-        matches: ['ethylene', 'acetylene', 'propylene', 'maleic_acid', 'fumaric_acid', 'styrene'],
-        reason: '炭素原子間に脂肪族性の不飽和二重結合または三重結合をもつため、臭素分子が速やかに付加して脱色されます。'
-      },
-      {
-        id: 'saponification',
-        question: '水酸化ナトリウム水溶液とともに加熱すると、けん化（加水分解）されるエステル化合物はどれか？',
-        shortTag: 'けん化 (エステル加水分解)',
-        matches: ['ethyl_acetate', 'methyl_salicylate', 'acetylsalicylic_acid'],
-        reason: 'エステル結合（-COO-）を分子内にもつため、強アルカリによって加水分解され塩とアルコール（またはフェノール類）を生じます。'
-      },
-      {
-        id: 'bleaching_powder',
-        question: 'さらし粉水溶液を加えると、特有の赤紫色に呈色するアミン化合物はどれか？',
-        shortTag: 'さらし粉呈色反応',
-        matches: ['aniline'],
-        reason: '芳香族第一級アミンであるアニリン特有の酸化呈色反応です。'
-      },
-      {
-        id: 'diazotization',
-        question: '氷冷下で亜硝酸ナトリウムと塩酸を加えると、ジアゾ化されて塩化ベンゼンジアゾニウムを生じるものはどれか？',
-        shortTag: 'ジアゾ化反応',
-        matches: ['aniline'],
-        reason: '芳香族第一級アミン（ベンゼン環に直結したアミノ基 -NH2）をもつアニリン特有の反応です。'
-      },
-      {
-        id: 'anhydride_dehydration',
-        question: '加熱すると分子内で容易に脱水し、環状の酸無水物を形成するシス型幾何異性体またはオルト置換体はどれか？',
-        shortTag: '分子内脱水 (酸無水物)',
-        matches: ['maleic_acid', 'phthalic_acid'],
-        reason: 'マレイン酸（シス型）やフタル酸（オルト位）は2つのカルボキシ基が空間的に近接しているため、容易に分子内脱水して無水物を生じます。'
-      },
-      {
-        id: 'chiral_carbon',
-        question: '不斉炭素原子（*C）をもち、互いに重ね合わすことができない鏡像異性体（光学異性体）が存在する分子はどれか？',
-        shortTag: '不斉炭素・鏡像異性体',
-        matches: ['lactic_acid', 'sec_butanol'],
-        reason: '中心の炭素原子に4つの互いに異なる原子または原子団が結合しているため不斉炭素原子となり、鏡像異性体が生じます。'
-      },
-      {
-        id: 'oxidation_to_pet',
-        question: '過マンガン酸カリウム等の強い酸化剤で酸化すると、ポリエステル繊維(PET)の原料であるテレフタル酸を生じるものはどれか？',
-        shortTag: '酸化によるテレフタル酸生成',
-        matches: ['p_xylene'],
-        reason: 'ベンゼン環のパラ位に対向する2つのメチル基が酸化されて、テレフタル酸（1,4-ベンゼンジカルボン酸）を与えます。'
-      },
-      {
-        id: 'cumene_process',
-        question: '工業的に空気酸化および希硫酸による分解（クメン法）を行うと、フェノールとアセトンを同時に生成する原料物質はどれか？',
-        shortTag: 'クメン法の原料',
-        matches: ['cumene'],
-        reason: 'クメンを酸化してクメンヒドロペルオキシドとし、酸分解することでフェノールとアセトンを併産します。'
-      }
-    ];
-
-    function selectCategory(category) {
-      selectedCategory = category;
-      
-      // Update UI button styling and active indicator
-      document.querySelectorAll('.category-select-btn').forEach(btn => {
-        const cat = btn.dataset.cat;
-        const indicator = btn.querySelector('.indicator-icon');
-
-        if (cat === category) {
-          btn.className = "category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-cyan-950/60 border-cyan-400 text-white shadow-lg shadow-cyan-500/15 scale-[1.02]";
-          if (indicator) {
-            indicator.classList.remove('hidden');
-            indicator.classList.add('flex');
-          }
-        } else {
-          btn.className = "category-select-btn group relative p-3 rounded-xl border text-left transition-all duration-200 bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-500 hover:bg-slate-800";
-          if (indicator) {
-            indicator.classList.add('hidden');
-            indicator.classList.remove('flex');
-          }
-        }
-      });
-
-      // Update preview text & count
-      const filtered = category === 'all' ? COMPOUNDS : COMPOUNDS.filter(c => c.category === category);
-      document.getElementById('selected-category-count').innerText = `対象: ${filtered.length}化合物`;
-      const previewText = document.getElementById('field-preview-text');
-      if (previewText && CATEGORY_DESCS[category]) {
-        previewText.innerText = CATEGORY_DESCS[category];
-      }
-
-      showToast(`📚 出題分野: 「${CATEGORY_NAMES[category]}」を選択しました`);
-    }
-
-    // Game State
-    let currentMode = 'normal'; // 'normal' (10 questions) or 'survival' (3 lives)
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let combo = 0;
-    let maxCombo = 0;
-    let correctCount = 0;
-    let lives = 3;
-    let timerInterval = null;
-    let timeLeft = 15;
-    let maxTime = 15;
-    let isAnswered = false;
-    let quizDeck = [];
-    let currentQuestion = null;
-    let unlockedCompoundIds = new Set();
-    let audioEnabled = true;
-
-    // High Score Persistence
-    let topScore = parseInt(localStorage.getItem('chemimaster_top_score') || '0');
-    let maxSavedCombo = parseInt(localStorage.getItem('chemimaster_max_combo') || '0');
-    document.getElementById('top-score-display').innerText = topScore;
-    document.getElementById('max-combo-display').innerText = maxSavedCombo;
-
-    // Load unlocked compounds
-    const savedCodex = localStorage.getItem('chemimaster_unlocked_compounds');
-    if (savedCodex) {
-      try {
-        JSON.parse(savedCodex).forEach(id => unlockedCompoundIds.add(id));
-      } catch (e) {}
-    }
-    updateCodexCounterBadge();
-
-    // Tone.js Audio Engine
+    /* ==========================================================
+       3. 音声エンジン (Tone.js)
+       ========================================================== */
     let synth = null;
-    let wrongSynth = null;
-    let audioInitialized = false;
+    let isSoundOn = true;
 
-    async function initAudio() {
-      if (!audioEnabled || audioInitialized) return;
-      try {
-        if (window.Tone) {
-          await Tone.start();
-          synth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: 'triangle' },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.3 }
-          }).toDestination();
-          synth.volume.value = -6;
-
-          wrongSynth = new Tone.MonoSynth({
-            oscillator: { type: 'sawtooth' },
-            envelope: { attack: 0.01, decay: 0.2, sustain: 0.0, release: 0.2 },
-            filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2, baseFrequency: 120, octaves: 2 }
-          }).toDestination();
-          wrongSynth.volume.value = -6;
-
-          audioInitialized = true;
-        }
-      } catch (e) {
-        console.warn('Tone.js audio initialization error:', e);
+    function initAudio() {
+      if (!synth && window.Tone) {
+        synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 }
+        }).toDestination();
+        Tone.start();
       }
     }
 
-    function playSound(type) {
-      if (!audioEnabled || !window.Tone) return;
-      if (!audioInitialized) {
-        initAudio();
-      }
+    function playSfx(type) {
+      if (!isSoundOn || !synth) return;
       try {
         const now = Tone.now();
         if (type === 'correct') {
-          if (synth) {
-            synth.triggerAttackRelease(['C5', 'E5', 'G5'], '16n', now);
-          }
+          synth.triggerAttackRelease(['C5', 'G5'], '16n', now);
         } else if (type === 'wrong') {
-          if (wrongSynth) {
-            wrongSynth.triggerAttackRelease('F2', '8n', now);
-          }
+          synth.triggerAttackRelease(['F3', 'B2'], '8n', now);
         } else if (type === 'fever') {
-          if (synth) {
-            synth.triggerAttackRelease(['C5', 'G5', 'C6'], '16n', now);
-            synth.triggerAttackRelease(['E5', 'B5', 'E6'], '16n', now + 0.1);
-          }
+          synth.triggerAttackRelease(['C5', 'E5', 'G5', 'C6'], '16n', now);
         } else if (type === 'tick') {
-          if (synth) {
-            synth.triggerAttackRelease('A5', '32n', now, 0.2);
-          }
+          synth.triggerAttackRelease('A5', '32n', now, 0.2);
         }
-      } catch (e) {
-        console.warn('Playback error:', e);
+      } catch(e) {}
+    }
+
+    /* ==========================================================
+       4. ゲーム状態管理
+       ========================================================== */
+    let currentCategory = 'all';
+    let currentMode = 'speed';
+    let qIndex = 0;
+    let totalQuestions = 10;
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let hp = 3;
+    let isFever = false;
+    let timerId = null;
+    let timeLeft = 15;
+    let currentQuiz = null;
+    let isAnswering = false;
+
+    let unlockedCompounds = JSON.parse(localStorage.getItem('org_chem_unlocked') || '[]');
+    let highScore = parseInt(localStorage.getItem('org_chem_hiscore') || '0');
+    let bestComboEver = parseInt(localStorage.getItem('org_chem_bestcombo') || '0');
+
+    /* ==========================================================
+       5. DOM要素
+       ========================================================== */
+    const titleView = document.getElementById('titleView');
+    const battleView = document.getElementById('battleView');
+    const resultView = document.getElementById('resultView');
+    const dexModal = document.getElementById('dexModal');
+
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundLabel = document.getElementById('soundLabel');
+    const navDexBtn = document.getElementById('navDexBtn');
+    const dexCollectedCount = document.getElementById('dexCollectedCount');
+
+    const titleHighScore = document.getElementById('titleHighScore');
+    const titleBestCombo = document.getElementById('titleBestCombo');
+
+    const questionTypeBadge = document.getElementById('questionTypeBadge');
+    const feverBadge = document.getElementById('feverBadge');
+    const hpContainer = document.getElementById('hpContainer');
+    const scoreVal = document.getElementById('scoreVal');
+    const timerBar = document.getElementById('timerBar');
+
+    const questionPrompt = document.getElementById('questionPrompt');
+    const questionSvgContainer = document.getElementById('questionSvgContainer');
+    const questionSvg = document.getElementById('questionSvg');
+    const questionFormula = document.getElementById('questionFormula');
+    const optionsGrid = document.getElementById('optionsGrid');
+
+    const answerFeedbackModal = document.getElementById('answerFeedbackModal');
+    const feedbackIcon = document.getElementById('feedbackIcon');
+    const feedbackTitle = document.getElementById('feedbackTitle');
+    const feedbackDesc = document.getElementById('feedbackDesc');
+    const feedbackNextBtn = document.getElementById('feedbackNextBtn');
+
+    /* ==========================================================
+       6. 初期化 & リスナー登録
+       ========================================================== */
+    function updateDexStats() {
+      dexCollectedCount.textContent = unlockedCompounds.length;
+      titleHighScore.textContent = highScore;
+      titleBestCombo.textContent = bestComboEver;
+    }
+
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => {
+          b.classList.remove('active-cat', 'border-cyan-400', 'bg-cyan-950/60', 'shadow-[0_0_12px_rgba(6,182,212,0.3)]');
+          b.classList.add('border-slate-700', 'bg-slate-900/60');
+        });
+        btn.classList.add('active-cat', 'border-cyan-400', 'bg-cyan-950/60', 'shadow-[0_0_12px_rgba(6,182,212,0.3)]');
+        btn.classList.remove('border-slate-700', 'bg-slate-900/60');
+        currentCategory = btn.dataset.cat;
+      });
+    });
+
+    soundToggleBtn.addEventListener('click', () => {
+      initAudio();
+      isSoundOn = !isSoundOn;
+      soundLabel.textContent = isSoundOn ? 'ON' : 'OFF';
+      soundToggleBtn.classList.toggle('text-cyan-300', isSoundOn);
+    });
+
+    document.getElementById('startSpeedBtn').addEventListener('click', () => startGame('speed'));
+    document.getElementById('startSurvivalBtn').addEventListener('click', () => startGame('survival'));
+    document.getElementById('resultRetryBtn').addEventListener('click', () => startGame(currentMode));
+    document.getElementById('resultHomeBtn').addEventListener('click', showTitle);
+    feedbackNextBtn.addEventListener('click', nextQuestion);
+
+    navDexBtn.addEventListener('click', openDex);
+    document.getElementById('dexCloseBtn').addEventListener('click', () => dexModal.classList.add('hidden'));
+
+    /* ==========================================================
+       7. ゲーム進行ロジック
+       ========================================================== */
+    function startGame(mode) {
+      initAudio();
+      currentMode = mode;
+      qIndex = 0;
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      hp = 3;
+      isFever = false;
+      totalQuestions = (mode === 'speed') ? 10 : 999;
+
+      titleView.classList.add('hidden');
+      resultView.classList.add('hidden');
+      battleView.classList.remove('hidden');
+
+      renderHp();
+      scoreVal.textContent = '0';
+      feverBadge.classList.add('hidden');
+
+      loadQuestion();
+    }
+
+    function renderHp() {
+      if (currentMode === 'survival') {
+        hpContainer.innerHTML = Array(3).fill(0).map((_, i) => 
+          `<span class="text-sm ${i < hp ? 'text-rose-500' : 'text-slate-600'}">❤️</span>`
+        ).join('');
+      } else {
+        hpContainer.innerHTML = `<span class="text-[10px] text-cyan-400 font-bold">第 ${qIndex + 1}/${totalQuestions} 問</span>`;
       }
     }
 
-    // Audio toggle button handler
-    const audioToggleBtn = document.getElementById('audio-toggle-btn');
-    if (audioToggleBtn) {
-      audioToggleBtn.addEventListener('click', () => {
-        audioEnabled = !audioEnabled;
-        const audioText = document.getElementById('audio-text');
-        if (audioEnabled) {
-          if (audioText) audioText.innerText = 'SOUND ON';
-          audioToggleBtn.classList.remove('text-slate-500');
-          audioToggleBtn.classList.add('text-slate-300');
-          initAudio();
-          showToast('🔊 サウンドをONにしました');
-        } else {
-          if (audioText) audioText.innerText = 'SOUND OFF';
-          audioToggleBtn.classList.remove('text-slate-300');
-          audioToggleBtn.classList.add('text-slate-500');
-          showToast('🔇 サウンドをOFFにしました');
-        }
-      });
+    function getEligiblePool() {
+      if (currentCategory === 'all') return COMPOUNDS;
+      return COMPOUNDS.filter(c => c.cat === currentCategory);
     }
 
-    /**
-     * Generate diverse questions respecting selected field:
-     * - Target compounds picked from selected category
-     * - Distractor choices prioritize the same category when possible for higher quality practice
-     * - Includes high-frequency organic reaction/property queries (ヨードホルム・銀鏡・FeCl3呈色など)
-     */
-    function buildQuestion(compound, categoryFilter = 'all') {
-      // 35%の確率で「反応・性質クイズ」を生成（全分野または該当カテゴリに正解が含まれる場合）
-      const canDoReactionQuiz = Math.random() < 0.35;
-      if (canDoReactionQuiz) {
-        // 現在のカテゴリフィルタに適合する正解を持つ反応ルールを検索
-        const eligibleRules = REACTION_RULES.filter(rule => {
-          return rule.matches.some(id => {
-            const c = COMPOUNDS.find(comp => comp.id === id);
-            return c && (categoryFilter === 'all' || c.category === categoryFilter);
-          });
-        });
+    function generateQuestion() {
+      const pool = getEligiblePool();
+      const r = Math.random();
 
-        if (eligibleRules.length > 0) {
-          const selectedRule = eligibleRules[Math.floor(Math.random() * eligibleRules.length)];
-          
-          // 正解候補から1つ選定（カテゴリ適合優先）
-          let matchingCompCandidates = selectedRule.matches
-            .map(id => COMPOUNDS.find(c => c.id === id))
-            .filter(Boolean);
-          if (categoryFilter !== 'all') {
-            const filteredMatches = matchingCompCandidates.filter(c => c.category === categoryFilter);
-            if (filteredMatches.length > 0) matchingCompCandidates = filteredMatches;
-          }
-          const correctCompound = matchingCompCandidates[Math.floor(Math.random() * matchingCompCandidates.length)];
+      // パターン1: 反応・性質判定テスト（40%）
+      if (r < 0.4) {
+        const availableTests = REACTION_TESTS.filter(t => pool.some(c => t.isTarget(c)));
+        if (availableTests.length > 0) {
+          const test = availableTests[Math.floor(Math.random() * availableTests.length)];
+          const targets = pool.filter(c => test.isTarget(c));
+          const correctTarget = targets[Math.floor(Math.random() * targets.length)];
 
-          // 不正解候補（その反応を示さない化合物）
-          let distractorCandidates = COMPOUNDS.filter(c => !selectedRule.matches.includes(c.id));
-          if (categoryFilter !== 'all') {
-            const sameCatDistractors = distractorCandidates.filter(c => c.category === categoryFilter);
-            if (sameCatDistractors.length >= 3) {
-              distractorCandidates = sameCatDistractors;
-            }
-          }
-          const wrongOptions = distractorCandidates.sort(() => 0.5 - Math.random()).slice(0, 3);
-          const allChoices = [correctCompound, ...wrongOptions].sort(() => 0.5 - Math.random());
-
-          // 構造式選択(SVG)か名称選択(テキスト)かをランダム決定
-          const isStructureChoices = Math.random() < 0.6;
+          const nonTargets = pool.filter(c => !test.isTarget(c));
+          const shuffledWrong = nonTargets.sort(() => 0.5 - Math.random()).slice(0, 3);
+          const options = [correctTarget, ...shuffledWrong].sort(() => 0.5 - Math.random());
 
           return {
-            type: isStructureChoices ? 'reaction_to_structure' : 'reaction_to_name',
-            target: correctCompound,
-            rule: selectedRule,
-            prompt: selectedRule.question,
-            choices: allChoices,
-            correctId: correctCompound.id,
-            reactionDesc: selectedRule.reason
+            type: 'reaction',
+            badge: test.badge,
+            prompt: test.question,
+            targetCompound: correctTarget,
+            options: options,
+            isStructureChoice: true,
+            desc: test.desc
           };
         }
       }
 
-      // 通常モード: 構造式 ⇔ 名称クイズ
-      const isStructureToName = Math.random() < 0.6;
-      
-      // Select distractors: prioritize compounds from the same category
-      let candidates = COMPOUNDS.filter(c => c.id !== compound.id);
-      if (categoryFilter !== 'all') {
-        const sameCatCandidates = candidates.filter(c => c.category === categoryFilter);
-        if (sameCatCandidates.length >= 3) {
-          candidates = sameCatCandidates;
-        }
-      }
-
-      const wrongOptions = candidates.sort(() => 0.5 - Math.random()).slice(0, 3);
-      const allChoices = [compound, ...wrongOptions].sort(() => 0.5 - Math.random());
-
-      if (isStructureToName) {
-        return {
-          type: 'structure_to_name',
-          target: compound,
-          prompt: 'この構造式をもつ化合物の正しい名称は？',
-          choices: allChoices,
-          correctId: compound.id
-        };
-      } else {
-        const prompts = [
-          `「${compound.name}」の正確な構造式を選べ！`,
-          `【性質・特徴】\n「${compound.desc}」\nに該当する分子はどれか？`
-        ];
-        const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+      // パターン2: 構造式 ➔ 名称（30%）
+      if (r < 0.7) {
+        const correct = pool[Math.floor(Math.random() * pool.length)];
+        const wrongChoices = pool.filter(c => c.id !== correct.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+        const options = [correct, ...wrongChoices].sort(() => 0.5 - Math.random());
 
         return {
-          type: 'name_to_structure',
-          target: compound,
-          prompt: selectedPrompt,
-          choices: allChoices,
-          correctId: compound.id
+          type: 'struct_to_name',
+          badge: '構造 ➔ 名称',
+          prompt: 'この構造式をもつ化合物の名称はどれか？',
+          targetCompound: correct,
+          options: options,
+          isStructureChoice: false,
+          desc: correct.desc
         };
       }
-    }
 
-    function showScreen(screenId) {
-      clearInterval(timerInterval);
-      ['title-screen', 'game-screen', 'result-screen'].forEach(id => {
-        const el = document.getElementById(id);
-        if (id === screenId) {
-          el.classList.remove('hidden');
-          el.classList.add('flex');
-        } else {
-          el.classList.add('hidden');
-          el.classList.remove('flex');
-        }
-      });
-      lucide.createIcons();
-    }
+      // パターン3: 名称・特徴 ➔ 構造式（30%）
+      const correct = pool[Math.floor(Math.random() * pool.length)];
+      const wrongChoices = pool.filter(c => c.id !== correct.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+      const options = [correct, ...wrongChoices].sort(() => 0.5 - Math.random());
 
-    function startGame(mode) {
-      initAudio();
-      currentMode = mode;
-      currentQuestionIndex = 0;
-      score = 0;
-      combo = 0;
-      maxCombo = 0;
-      correctCount = 0;
-      lives = 3;
-
-      // Filter compound pool by selected category
-      const targetPool = selectedCategory === 'all'
-        ? COMPOUNDS
-        : COMPOUNDS.filter(c => c.category === selectedCategory);
-
-      // Shuffle compound pool
-      let shuffled = [...targetPool].sort(() => 0.5 - Math.random());
-
-      // If category has fewer than 10 compounds and in normal mode, repeat until at least 10
-      if (mode === 'normal') {
-        while (shuffled.length < 10) {
-          shuffled = shuffled.concat([...targetPool].sort(() => 0.5 - Math.random()));
-        }
-        quizDeck = shuffled.slice(0, 10).map(c => buildQuestion(c, selectedCategory));
-      } else {
-        // Survival uses a continuous loop
-        quizDeck = shuffled.map(c => buildQuestion(c, selectedCategory));
-      }
-
-      showScreen('game-screen');
-      updateHUD();
-      loadQuestion();
-    }
-
-    function updateHUD() {
-      document.getElementById('hud-score').innerText = score;
-      
-      // Field badge
-      const fieldBadge = document.getElementById('hud-field-badge');
-      if (fieldBadge) {
-        fieldBadge.innerText = CATEGORY_NAMES[selectedCategory] || '全分野';
-      }
-
-      // Question label
-      if (currentMode === 'normal') {
-        document.getElementById('hud-question-label').innerText = `Q. ${currentQuestionIndex + 1}/10`;
-        document.getElementById('hud-lives-container').innerHTML = '';
-      } else {
-        document.getElementById('hud-question-label').innerText = `SURVIVAL: #${currentQuestionIndex + 1}`;
-        let hearts = '';
-        for (let i = 0; i < 3; i++) {
-          hearts += i < lives 
-            ? `<i data-lucide="heart" class="w-4 h-4 fill-rose-500 text-rose-500"></i>`
-            : `<i data-lucide="heart" class="w-4 h-4 text-slate-600"></i>`;
-        }
-        document.getElementById('hud-lives-container').innerHTML = hearts;
-      }
-
-      // Combo & Fever
-      const comboEl = document.getElementById('combo-container');
-      const feverEl = document.getElementById('fever-badge');
-      if (combo >= 2) {
-        comboEl.classList.remove('hidden');
-        comboEl.classList.add('flex');
-        document.getElementById('combo-text').innerText = `COMBO x${combo}`;
-      } else {
-        comboEl.classList.add('hidden');
-        comboEl.classList.remove('flex');
-      }
-
-      if (combo >= 4) {
-        feverEl.classList.remove('hidden');
-      } else {
-        feverEl.classList.add('hidden');
-      }
-
-      lucide.createIcons();
+      return {
+        type: 'name_to_struct',
+        badge: '名称 ➔ 構造',
+        prompt: `「${correct.name}」(${correct.formula}) の正確な構造式を選べ！`,
+        targetCompound: correct,
+        options: options,
+        isStructureChoice: true,
+        desc: correct.desc
+      };
     }
 
     function loadQuestion() {
-      isAnswered = false;
-      document.getElementById('feedback-banner').classList.add('hidden');
-      document.getElementById('question-card').classList.remove('animate-shake');
-
-      // Check if we need to regenerate questions for survival
-      if (currentMode === 'survival' && currentQuestionIndex >= quizDeck.length) {
-        const targetPool = selectedCategory === 'all'
-          ? COMPOUNDS
-          : COMPOUNDS.filter(c => c.category === selectedCategory);
-        const more = [...targetPool].sort(() => 0.5 - Math.random()).map(c => buildQuestion(c, selectedCategory));
-        quizDeck = quizDeck.concat(more);
+      if (currentMode === 'speed' && qIndex >= totalQuestions) {
+        endGame();
+        return;
+      }
+      if (currentMode === 'survival' && hp <= 0) {
+        endGame();
+        return;
       }
 
-      currentQuestion = quizDeck[currentQuestionIndex];
-      const target = currentQuestion.target;
+      isAnswering = false;
+      renderHp();
+      currentQuiz = generateQuestion();
 
-      // Update Tags
-      document.getElementById('question-prompt').innerText = currentQuestion.prompt;
-      document.getElementById('question-category-tag').innerText = 
-        target.category === 'aromatic' ? '芳香族化合物' :
-        target.category === 'aliphatic' ? '脂肪族化合物' :
-        target.category === 'oxygen' ? '酸素を含む化合物' : '窒素を含む化合物';
+      questionTypeBadge.textContent = currentQuiz.badge;
+      questionPrompt.textContent = currentQuiz.prompt;
 
-      const typeTag = document.getElementById('question-type-tag');
-      const mainContainer = document.getElementById('main-structure-container');
-      const optionsContainer = document.getElementById('options-container');
-      optionsContainer.innerHTML = '';
-
-      if (currentQuestion.type === 'structure_to_name') {
-        typeTag.innerText = '構造式 → 化合物名';
-        mainContainer.classList.remove('hidden');
-        document.getElementById('main-svg-wrapper').innerHTML = target.svg;
-        document.getElementById('structure-hint').innerText = target.formula;
-
-        // 4 Text Choices
-        currentQuestion.choices.forEach(choice => {
-          const btn = document.createElement('button');
-          btn.className = "w-full p-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-cyan-400 text-slate-100 font-semibold text-sm sm:text-base transition-all duration-150 text-center flex items-center justify-between group cursor-pointer shadow-md";
-          btn.innerHTML = `
-            <span class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-xs flex items-center justify-center font-chakra group-hover:border-cyan-400 text-slate-400 group-hover:text-cyan-400">⬡</span>
-              <span>${choice.name}</span>
-            </span>
-            <span class="text-xs font-mono text-slate-400 group-hover:text-slate-200">${choice.formula}</span>
-          `;
-          btn.onclick = () => checkAnswer(choice.id, btn);
-          optionsContainer.appendChild(btn);
-        });
-
-      } else if (currentQuestion.type === 'reaction_to_name') {
-        // Reaction query with 4 text name buttons
-        typeTag.innerText = `反応・性質テスト [${currentQuestion.rule.shortTag}]`;
-        mainContainer.classList.add('hidden');
-
-        currentQuestion.choices.forEach(choice => {
-          const btn = document.createElement('button');
-          btn.className = "w-full p-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-amber-400 text-slate-100 font-semibold text-sm sm:text-base transition-all duration-150 text-center flex items-center justify-between group cursor-pointer shadow-md";
-          btn.innerHTML = `
-            <span class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-xs flex items-center justify-center font-chakra group-hover:border-amber-400 text-slate-400 group-hover:text-amber-400">⚡</span>
-              <span>${choice.name}</span>
-            </span>
-            <span class="text-xs font-mono text-slate-400 group-hover:text-slate-200">${choice.formula}</span>
-          `;
-          btn.onclick = () => checkAnswer(choice.id, btn);
-          optionsContainer.appendChild(btn);
-        });
-
-      } else if (currentQuestion.type === 'reaction_to_structure') {
-        // Reaction query with 4 SVG structure choices
-        typeTag.innerText = `反応・性質テスト [${currentQuestion.rule.shortTag}]`;
-        mainContainer.classList.add('hidden');
-
-        currentQuestion.choices.forEach(choice => {
-          const btn = document.createElement('button');
-          btn.className = "w-full p-2.5 h-44 sm:h-48 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-amber-400 transition-all duration-150 flex flex-col items-center justify-between group cursor-pointer shadow-md relative overflow-hidden";
-          btn.innerHTML = `
-            <div class="w-full flex-1 flex items-center justify-center p-1 pointer-events-none">
-              ${choice.svg}
-            </div>
-            <div class="w-full text-center text-xs font-mono text-slate-400 border-t border-slate-700/60 pt-1 group-hover:text-amber-300">
-              ${choice.formula}
-            </div>
-          `;
-          btn.onclick = () => checkAnswer(choice.id, btn);
-          optionsContainer.appendChild(btn);
-        });
-
+      if (!currentQuiz.isStructureChoice) {
+        questionSvgContainer.classList.remove('hidden');
+        questionSvg.innerHTML = currentQuiz.targetCompound.svg;
+        questionFormula.textContent = currentQuiz.targetCompound.formula;
       } else {
-        // Name / Feature to Structure
-        typeTag.innerText = '名称・性質 → 構造式を選択';
-        mainContainer.classList.add('hidden'); // No big single SVG
-
-        // 4 SVG Grid Choices (enlarged height to prevent any clipping)
-        currentQuestion.choices.forEach(choice => {
-          const btn = document.createElement('button');
-          btn.className = "w-full p-2.5 h-44 sm:h-48 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-cyan-400 transition-all duration-150 flex flex-col items-center justify-between group cursor-pointer shadow-md relative overflow-hidden";
-          btn.innerHTML = `
-            <div class="w-full flex-1 flex items-center justify-center p-1 pointer-events-none">
-              ${choice.svg}
-            </div>
-            <div class="w-full text-center text-xs font-mono text-slate-400 border-t border-slate-700/60 pt-1 group-hover:text-cyan-300">
-              ${choice.formula}
-            </div>
-          `;
-          btn.onclick = () => checkAnswer(choice.id, btn);
-          optionsContainer.appendChild(btn);
-        });
+        questionSvgContainer.classList.add('hidden');
       }
+
+      optionsGrid.innerHTML = '';
+      currentQuiz.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-cyber flex flex-col items-center justify-center p-1 sm:p-2 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-cyan-400 active:scale-95 transition-all w-full h-full relative overflow-hidden';
+        
+        if (currentQuiz.isStructureChoice) {
+          btn.innerHTML = `
+            <div class="w-full h-[75%] flex items-center justify-center pointer-events-none">
+              <svg viewBox="0 0 180 180" class="w-full h-full object-contain">${opt.svg}</svg>
+            </div>
+            <span class="text-[10px] font-mono text-cyan-300/80 mt-0.5 tracking-wider">${opt.formula}</span>
+          `;
+        } else {
+          btn.innerHTML = `
+            <span class="text-sm sm:text-base font-bold text-white leading-snug px-1 w-full truncate">${opt.name}</span>
+            <span class="text-[11px] font-mono text-cyan-300/80 mt-0.5">${opt.formula}</span>
+          `;
+        }
+
+        btn.addEventListener('click', () => handleAnswer(opt.id, btn));
+        optionsGrid.appendChild(btn);
+      });
 
       startTimer();
-      updateHUD();
     }
 
     function startTimer() {
-      clearInterval(timerInterval);
-      timeLeft = maxTime;
-      updateTimerDisplay();
+      clearInterval(timerId);
+      timeLeft = 15;
+      timerBar.style.width = '100%';
+      timerBar.classList.remove('from-rose-500', 'to-amber-500');
+      timerBar.classList.add('from-cyan-400', 'to-emerald-400');
 
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
+      const totalTime = 15;
+      const interval = 100;
 
-        if (timeLeft <= 3 && timeLeft > 0) {
-          playSound('tick');
+      timerId = setInterval(() => {
+        timeLeft -= interval / 1000;
+        const pct = Math.max(0, (timeLeft / totalTime) * 100);
+        timerBar.style.width = `${pct}%`;
+
+        if (timeLeft <= 4) {
+          timerBar.classList.remove('from-cyan-400', 'to-emerald-400');
+          timerBar.classList.add('from-rose-500', 'to-amber-500');
+          playSfx('tick');
         }
 
         if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          handleTimeOut();
+          clearInterval(timerId);
+          handleAnswer(null, null);
         }
-      }, 1000);
+      }, interval);
     }
 
-    function updateTimerDisplay() {
-      const timerText = document.getElementById('timer-text');
-      const timerCircle = document.getElementById('timer-circle');
-      timerText.innerText = timeLeft;
+    function handleAnswer(selectedId, clickedBtn) {
+      if (isAnswering) return;
+      isAnswering = true;
+      clearInterval(timerId);
 
-      const percentage = (timeLeft / maxTime) * 100;
-      timerCircle.setAttribute('stroke-dasharray', `${percentage}, 100`);
-
-      if (timeLeft <= 4) {
-        timerCircle.setAttribute('class', 'text-rose-500 transition-all duration-100 ease-linear');
-        timerText.classList.add('text-rose-400');
-      } else {
-        timerCircle.setAttribute('class', 'text-cyan-400 transition-all duration-100 ease-linear');
-        timerText.classList.remove('text-rose-400');
-      }
-    }
-
-    function handleTimeOut() {
-      if (isAnswered) return;
-      checkAnswer(null, null, true);
-    }
-
-    function checkAnswer(selectedId, buttonEl, isTimeOut = false) {
-      if (isAnswered) return;
-      isAnswered = true;
-      clearInterval(timerInterval);
-
-      const target = currentQuestion.target;
-      const isCorrect = (selectedId === currentQuestion.correctId);
-
-      const feedbackBanner = document.getElementById('feedback-banner');
-      const feedbackIcon = document.getElementById('feedback-icon');
-      const feedbackTitle = document.getElementById('feedback-title');
-      const feedbackDesc = document.getElementById('feedback-desc');
-
-      feedbackBanner.classList.remove('hidden');
+      const isCorrect = (selectedId === currentQuiz.targetCompound.id);
 
       if (isCorrect) {
-        // Correct Logic
-        correctCount++;
+        playSfx('correct');
         combo++;
         if (combo > maxCombo) maxCombo = combo;
-        if (combo > maxSavedCombo) {
-          maxSavedCombo = combo;
-          localStorage.setItem('chemimaster_max_combo', maxSavedCombo);
-          document.getElementById('max-combo-display').innerText = maxSavedCombo;
+
+        if (combo >= 4) {
+          if (!isFever) playSfx('fever');
+          isFever = true;
+          feverBadge.classList.remove('hidden');
+          battleView.classList.add('fever-glow');
         }
 
-        // Score formula: Base 100 + Time Bonus (up to 50) * Fever Multiplier
-        const feverMultiplier = combo >= 4 ? 2 : 1;
-        const timeBonus = Math.floor((timeLeft / maxTime) * 50);
-        const earnedScore = (100 + timeBonus) * feverMultiplier;
-        score += earnedScore;
+        const timeBonus = Math.floor(timeLeft * 25);
+        const added = (300 + timeBonus) * (isFever ? 2 : 1);
+        score += added;
+        scoreVal.textContent = score;
 
-        if (score > topScore) {
-          topScore = score;
-          localStorage.setItem('chemimaster_top_score', topScore);
-          document.getElementById('top-score-display').innerText = topScore;
+        if (!unlockedCompounds.includes(currentQuiz.targetCompound.id)) {
+          unlockedCompounds.push(currentQuiz.targetCompound.id);
+          localStorage.setItem('org_chem_unlocked', JSON.stringify(unlockedCompounds));
+          updateDexStats();
         }
 
-        // Audio & visual reward
-        playSound('correct');
-        if (combo >= 4) playSound('fever');
-
-        // Confetti burst on high combo
-        if (combo % 3 === 0 && window.confetti) {
-          confetti({
-            particleCount: 40,
-            spread: 60,
-            origin: { y: 0.7 }
-          });
-        }
-
-        // Highlight correct button
-        if (buttonEl) {
-          buttonEl.classList.remove('bg-slate-800/80', 'border-slate-700');
-          buttonEl.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-200');
-        }
-
-        feedbackBanner.className = "mt-4 p-4 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-emerald-300";
-        feedbackIcon.className = "w-6 h-6 flex items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40";
-        feedbackIcon.innerText = "✓";
-        feedbackTitle.innerText = `正解！ +${earnedScore} pts ${combo >= 4 ? '(FEVER x2!)' : ''}`;
-
-        // Unlock in Codex
-        unlockCompound(target.id);
-
+        feedbackIcon.textContent = '⭕ CORRECT!';
+        feedbackTitle.className = 'text-base font-black text-cyan-400';
+        feedbackTitle.textContent = `${currentQuiz.targetCompound.name}（正解）`;
       } else {
-        // Incorrect Logic
+        playSfx('wrong');
         combo = 0;
-        playSound('wrong');
-        document.getElementById('question-card').classList.add('animate-shake');
+        isFever = false;
+        feverBadge.classList.add('hidden');
+        battleView.classList.remove('fever-glow');
 
         if (currentMode === 'survival') {
-          lives--;
+          hp--;
+          renderHp();
         }
 
-        if (buttonEl) {
-          buttonEl.classList.remove('bg-slate-800/80', 'border-slate-700');
-          buttonEl.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-200');
-        }
-
-        // Highlight the true correct choice among options
-        const optionBtns = document.getElementById('options-container').children;
-        for (let btn of optionBtns) {
-          // If text option or svg option matches correct id
-          if (btn.innerText.includes(target.name) || btn.innerHTML.includes(target.svg)) {
-            btn.classList.add('border-emerald-500', 'bg-emerald-950/40');
-          }
-        }
-
-        feedbackBanner.className = "mt-4 p-4 rounded-xl border border-rose-500/50 bg-rose-950/40 text-rose-300";
-        feedbackIcon.className = "w-6 h-6 flex items-center justify-center rounded-full bg-rose-500/20 text-rose-400 font-bold border border-rose-500/40";
-        feedbackIcon.innerText = "✕";
-        feedbackTitle.innerText = isTimeOut ? '時間切れ！不正解' : `不正解... 正解は「${target.name}」`;
+        feedbackIcon.textContent = (selectedId === null) ? '⏳ TIME OVER!' : '❌ INCORRECT...';
+        feedbackTitle.className = 'text-base font-black text-rose-400';
+        feedbackTitle.textContent = `正解は: ${currentQuiz.targetCompound.name}`;
       }
 
-      if (currentQuestion.reactionDesc) {
-        feedbackDesc.innerHTML = `
-          <div class="font-semibold text-amber-300 mb-1">【反応の理由】${currentQuestion.reactionDesc}</div>
-          <div class="text-slate-400">【物質解説】${target.name} (${target.formula}): ${target.desc}</div>
-        `;
-      } else {
-        feedbackDesc.innerText = `【解説】${target.name} (${target.formula}): ${target.desc}`;
-      }
-      updateHUD();
-
-      // Check for survival sudden death
-      if (currentMode === 'survival' && lives <= 0) {
-        document.getElementById('next-btn').innerHTML = `
-          <span>結果を見る</span>
-          <i data-lucide="award" class="w-4 h-4"></i>
-        `;
-        lucide.createIcons();
-      }
+      feedbackDesc.textContent = currentQuiz.desc;
+      answerFeedbackModal.classList.remove('hidden');
     }
 
     function nextQuestion() {
-      if (currentMode === 'survival' && lives <= 0) {
-        finishGame();
-        return;
-      }
-
-      currentQuestionIndex++;
-      if (currentMode === 'normal' && currentQuestionIndex >= 10) {
-        finishGame();
-        return;
-      }
-
+      answerFeedbackModal.classList.add('hidden');
+      qIndex++;
       loadQuestion();
     }
 
-    function finishGame() {
-      clearInterval(timerInterval);
-      showScreen('result-screen');
+    function endGame() {
+      clearInterval(timerId);
+      battleView.classList.add('hidden');
+      resultView.classList.remove('hidden');
 
-      // Play finish celebration
-      if (window.confetti && (correctCount >= 7 || score >= 1200)) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('org_chem_hiscore', highScore.toString());
       }
-
-      const totalAttempted = currentMode === 'normal' ? 10 : (currentQuestionIndex + 1);
-      const accuracy = Math.round((correctCount / totalAttempted) * 100);
-
-      document.getElementById('result-final-score').innerText = score;
-      document.getElementById('result-accuracy').innerText = `${accuracy}%`;
-      document.getElementById('result-max-combo').innerText = maxCombo;
-
-      // Title and Evaluation
-      const rankTitle = document.getElementById('result-rank-title');
-      const titleEval = document.getElementById('result-title-evaluation');
-      const reviewText = document.getElementById('result-review-text');
-
-      if (accuracy >= 90) {
-        rankTitle.innerText = "GRADE: S (EXCELLENT)";
-        titleEval.innerText = "ノーベル化学賞候補・分子アーキテクト";
-        reviewText.innerText = "驚異的な識別スピードと完璧な知識！あらゆる官能基と骨格を完璧に把握しています。";
-      } else if (accuracy >= 70) {
-        rankTitle.innerText = "GRADE: A (GREAT)";
-        titleEval.innerText = "主任研究員・ケミカルマイスター";
-        reviewText.innerText = "非常に高い正答率です。芳香族とエステル化合物の違いも的確に見抜けています。";
-      } else if (accuracy >= 50) {
-        rankTitle.innerText = "GRADE: B (GOOD)";
-        titleEval.innerText = "新進気鋭の実験助手";
-        reviewText.innerText = "基礎知識は身についています。図鑑を活用して似ている異性体や誘導体の差を復習しましょう！";
-      } else {
-        rankTitle.innerText = "GRADE: C (TRAINEE)";
-        titleEval.innerText = "ラボ見習い研究生";
-        reviewText.innerText = "まずは代表的なベンゼン誘導体（フェノール、アニリン、サリチル酸）の構造から覚えましょう！";
+      if (maxCombo > bestComboEver) {
+        bestComboEver = maxCombo;
+        localStorage.setItem('org_chem_bestcombo', bestComboEver.toString());
       }
+      updateDexStats();
+
+      document.getElementById('resultScore').textContent = `${score} PTS`;
+      document.getElementById('resultCombo').textContent = maxCombo;
+      const acc = (currentMode === 'speed') ? Math.round((score / 6000) * 100) : '--';
+      document.getElementById('resultAccuracy').textContent = `${Math.min(100, Math.max(10, acc))}%`;
+
+      let title = '見習い研究員';
+      if (score >= 5000) title = '🧪 ノーベル化学賞級 主任研究員';
+      else if (score >= 3500) title = '⌬ 有機合成スペシャリスト';
+      else if (score >= 2000) title = '📘 入試突破レベル研究員';
+      document.getElementById('resultTitleGrade').textContent = `称号: ${title}`;
     }
 
-    function restartGame() {
-      startGame(currentMode);
+    function showTitle() {
+      clearInterval(timerId);
+      resultView.classList.add('hidden');
+      battleView.classList.add('hidden');
+      titleView.classList.remove('hidden');
+      updateDexStats();
     }
 
-    function confirmQuit() {
-      // In-game custom exit modal check without native confirm
-      showToast('ゲームを終了してタイトル画面に戻りました');
-      showScreen('title-screen');
+    /* ==========================================================
+       8. 分子図鑑（Dex）
+       ========================================================== */
+    function openDex() {
+      renderDexItems('all');
+      dexModal.classList.remove('hidden');
     }
 
-    function unlockCompound(id) {
-      if (!unlockedCompoundIds.has(id)) {
-        unlockedCompoundIds.add(id);
-        localStorage.setItem('chemimaster_unlocked_compounds', JSON.stringify([...unlockedCompoundIds]));
-        updateCodexCounterBadge();
-        showToast(`✨ 分子図鑑に「${COMPOUNDS.find(c => c.id === id).name}」が登録されました！`);
-      }
-    }
+    function renderDexItems(filter) {
+      const dexList = document.getElementById('dexList');
+      dexList.innerHTML = '';
 
-    function updateCodexCounterBadge() {
-      const badge = document.getElementById('codex-counter-badge');
-      const status = document.getElementById('codex-unlocked-status');
-      const headerRate = document.getElementById('header-unlocked-rate');
-      
-      const unlockedCount = unlockedCompoundIds.size;
-      const totalCount = COMPOUNDS.length;
-      const rate = Math.round((unlockedCount / totalCount) * 100);
+      const list = (filter === 'all') ? COMPOUNDS : COMPOUNDS.filter(c => c.cat === filter);
 
-      if (badge) badge.innerText = `${unlockedCount}/${totalCount}`;
-      if (status) status.innerText = `アンロック状況: ${unlockedCount} / ${totalCount}`;
-      if (headerRate) headerRate.innerText = `${rate}%`;
-    }
-
-    function openCodexModal() {
-      const modal = document.getElementById('codex-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      renderCodexGrid('all');
-      lucide.createIcons();
-    }
-
-    function closeCodexModal() {
-      const modal = document.getElementById('codex-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function filterCodex(category) {
-      // Update filter button styling
-      document.querySelectorAll('.codex-filter-btn').forEach(btn => {
-        if (btn.dataset.cat === category) {
-          btn.className = "px-3 py-1 rounded-full bg-cyan-500 text-slate-950 font-bold codex-filter-btn";
-        } else {
-          btn.className = "px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 codex-filter-btn";
-        }
-      });
-      renderCodexGrid(category);
-    }
-
-    function renderCodexGrid(filter) {
-      const grid = document.getElementById('codex-grid');
-      grid.innerHTML = '';
-
-      const filtered = COMPOUNDS.filter(c => filter === 'all' || c.category === filter);
-
-      filtered.forEach(item => {
-        const isUnlocked = unlockedCompoundIds.has(item.id);
+      list.forEach(c => {
+        const isUnlocked = unlockedCompounds.includes(c.id);
         const card = document.createElement('div');
-        card.className = `p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
+        card.className = `p-2 rounded-xl border flex flex-col justify-between ${
           isUnlocked 
-            ? 'bg-slate-900 border-slate-700/80 hover:border-cyan-500/80 shadow-md' 
-            : 'bg-slate-950/60 border-slate-800 opacity-75'
+            ? 'bg-slate-900/90 border-cyan-500/40 text-slate-100' 
+            : 'bg-slate-950/70 border-slate-800 text-slate-600 opacity-60'
         }`;
 
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-mono px-2 py-0.5 rounded ${
-                isUnlocked ? 'bg-cyan-950 text-cyan-300 border border-cyan-800' : 'bg-slate-800 text-slate-500'
-              }">
-                ${item.formula}
-              </span>
-              <span class="text-[11px] font-semibold ${isUnlocked ? 'text-emerald-400' : 'text-slate-500'}">
-                ${isUnlocked ? '✓ 解放済' : '🔒 未解禁'}
-              </span>
+        if (isUnlocked) {
+          card.innerHTML = `
+            <div class="h-24 flex items-center justify-center p-1 bg-slate-950/50 rounded-lg">
+              <svg viewBox="0 0 180 180" class="w-full h-full object-contain">${c.svg}</svg>
             </div>
-            
-            <div class="w-full h-28 bg-slate-950 rounded-lg p-2 flex items-center justify-center mb-3 border border-slate-800/70">
-              ${isUnlocked ? item.svg : `<div class="text-slate-600 font-chakra text-sm font-bold">? ? ?</div>`}
+            <div class="mt-1">
+              <div class="flex justify-between items-baseline">
+                <span class="text-xs font-bold text-cyan-300">${c.name}</span>
+                <span class="text-[10px] font-mono text-slate-400">${c.formula}</span>
+              </div>
+              <p class="text-[10px] text-slate-300 leading-snug mt-1 max-h-12 overflow-y-auto">${c.desc}</p>
             </div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="h-24 flex flex-col items-center justify-center text-slate-600">
+              <span class="text-2xl">🔒</span>
+              <span class="text-[10px] font-mono mt-1">LOCKED</span>
+            </div>
+            <div class="mt-1 text-center">
+              <span class="text-xs font-mono text-slate-500">??? (${c.formula})</span>
+            </div>
+          `;
+        }
 
-            <h4 class="text-sm font-bold ${isUnlocked ? 'text-white' : 'text-slate-400'}">
-              ${isUnlocked ? item.name : '未知の化合物'}
-            </h4>
-          </div>
-
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed line-clamp-3">
-            ${isUnlocked ? item.desc : 'クイズで正解すると詳細な反応・性質データが解放されます。'}
-          </p>
-        `;
-
-        grid.appendChild(card);
+        dexList.appendChild(card);
       });
     }
 
-    let toastTimeout;
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      const text = document.getElementById('toast-text');
-      text.innerText = message;
-      
-      clearTimeout(toastTimeout);
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 2500);
-    }
-
-    // Modal dismiss on click outside
-    document.getElementById('codex-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'codex-modal') {
-        closeCodexModal();
-      }
+    document.querySelectorAll('.dex-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.dex-tab').forEach(t => {
+          t.classList.remove('bg-cyan-500', 'text-slate-900');
+          t.classList.add('bg-slate-800', 'text-slate-300');
+        });
+        tab.classList.add('bg-cyan-500', 'text-slate-900');
+        tab.classList.remove('bg-slate-800', 'text-slate-300');
+        renderDexItems(tab.dataset.filter);
+      });
     });
 
-    // Window load hook
-    window.onload = () => {
-      lucide.createIcons();
-      showScreen('title-screen');
-    };
+    updateDexStats();
   </script>
 </body>
 </html>
